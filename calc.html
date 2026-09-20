@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Банкетный калькулятор — Красное&Белое</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="container">
+      <div class="header__top">
+        <button class="mobile-menu-btn" aria-label="Меню">
+          <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
+        <a href="index.html" class="header__logo">
+          <span class="header__logo-mark">КБ</span>
+          Красное&Белое
+        </a>
+        <div class="header__search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="search" placeholder="Найти товар, категорию или бренд">
+        </div>
+        <div class="header__actions">
+          <button class="header__btn">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Магазин</span>
+          </button>
+          <button class="header__btn">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Войти</span>
+          </button>
+          <button class="header__btn header__btn--primary">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></svg>
+            <span>Корзина</span>
+          </button>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="catalog.html" class="nav__item">Каталог</a>
+        <a href="#" class="nav__item">Акции</a>
+        <a href="#" class="nav__item">Магазины</a>
+        <a href="calc.html" class="nav__item nav__item--active">Банкетный калькулятор</a>
+        <a href="#" class="nav__item">Доставка</a>
+        <a href="#" class="nav__item">Работа у нас</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="breadcrumbs">
+      <a href="index.html">Главная</a>
+      <span>/</span>
+      <span>Банкетный калькулятор</span>
+    </div>
+    <h1 class="section__title" style="padding: 16px 0 0;">Банкетный калькулятор</h1>
+    <p style="color: var(--gray-600); font-size: 15px; padding-bottom: 8px;">Рассчитайте количество напитков и продуктов для вашего мероприятия</p>
+  </div>
+
+  <div class="container">
+    <div class="calc-layout">
+
+      <!-- ФОРМА -->
+      <div>
+        <div class="calc-card">
+          <div class="calc-card__title">Параметры мероприятия</div>
+          <div class="calc-card__desc">Укажите количество гостей и продолжительность</div>
+
+          <div class="calc-row">
+            <div class="calc-field">
+              <label class="calc-field__label">Количество гостей</label>
+              <input type="number" class="calc-field__input" value="20" min="1">
+            </div>
+            <div class="calc-field">
+              <label class="calc-field__label">Продолжительность, ч</label>
+              <input type="number" class="calc-field__input" value="4" min="1">
+            </div>
+          </div>
+
+          <div class="calc-field">
+            <label class="calc-field__label">Тип мероприятия</label>
+            <select class="calc-field__select">
+              <option>Свадьба</option>
+              <option>Корпоратив</option>
+              <option>День рождения</option>
+              <option>Дружеская вечеринка</option>
+            </select>
+          </div>
+
+          <div class="calc-field">
+            <label class="calc-field__label">Магазин</label>
+            <select class="calc-field__select">
+              <option>Выберите магазин</option>
+              <option>Москва, ул. Тверская, 1</option>
+              <option>Санкт-Петербург, Невский пр., 10</option>
+              <option>Казань, ул. Баумана, 5</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="calc-card">
+          <div class="calc-card__title">Напитки и продукты</div>
+          <div class="calc-card__desc">Отметьте, что планируете заказать</div>
+
+          <label class="filters__option" style="padding:10px 0; font-size:14px;">
+            <input type="checkbox" checked> Алкогольные напитки
+          </label>
+          <label class="filters__option" style="padding:10px 0; font-size:14px;">
+            <input type="checkbox" checked> Безалкогольные напитки
+          </label>
+          <label class="filters__option" style="padding:10px 0; font-size:14px;">
+            <input type="checkbox" checked> Закуски
+          </label>
+          <label class="filters__option" style="padding:10px 0; font-size:14px;">
+            <input type="checkbox"> Десерты
+          </label>
+        </div>
+      </div>
+
+      <!-- РЕЗУЛЬТАТ -->
+      <div class="calc-result">
+        <div class="calc-result__title">Предварительный расчёт</div>
+
+        <div class="calc-result__row">
+          <span>Гостей</span>
+          <span class="calc-result__value">20 чел.</span>
+        </div>
+        <div class="calc-result__row">
+          <span>Шампанское</span>
+          <span class="calc-result__value">6 бут.</span>
+        </div>
+        <div class="calc-result__row">
+          <span>Вино</span>
+          <span class="calc-result__value">8 бут.</span>
+        </div>
+        <div class="calc-result__row">
+          <span>Крепкий алкоголь</span>
+          <span class="calc-result__value">4 бут.</span>
+        </div>
+        <div class="calc-result__row">
+          <span>Безалкогольные</span>
+          <span class="calc-result__value">12 л</span>
+        </div>
+        <div class="calc-result__row">
+          <span>Закуски</span>
+          <span class="calc-result__value">~6 кг</span>
+        </div>
+
+        <div class="calc-result__total">
+          <span class="calc-result__total-label">Итого</span>
+          <span class="calc-result__total-value">~18 400 ₽</span>
+        </div>
+
+        <button class="calc-result__btn">Сохранить расчёт</button>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div>
+          <div class="footer__brand">Красное&Белое</div>
+          <p class="footer__text">Сеть магазинов у дома: продукты питания, алкогольные и безалкогольные напитки, промтовары и корма для животных.</p>
+        </div>
+        <div>
+          <div class="footer__title">Покупателям</div>
+          <a href="catalog.html" class="footer__link">Каталог</a>
+          <a href="#" class="footer__link">Акции</a>
+          <a href="calc.html" class="footer__link">Калькулятор</a>
+          <a href="#" class="footer__link">Доставка</a>
+        </div>
+        <div>
+          <div class="footer__title">Компания</div>
+          <a href="#" class="footer__link">О нас</a>
+          <a href="#" class="footer__link">Магазины</a>
+          <a href="#" class="footer__link">Работа у нас</a>
+          <a href="#" class="footer__link">Контакты</a>
+        </div>
+        <div>
+          <div class="footer__title">Контакты</div>
+          <a href="tel:88002004090" class="footer__link">8 800 200-40-90</a>
+          <a href="mailto:info@kb.ru" class="footer__link">info@kb.ru</a>
+          <a href="#" class="footer__link">Telegram</a>
+          <a href="#" class="footer__link">ВКонтакте</a>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <div>© 2026 Красное&Белое. Все права защищены.</div>
+        <div>18+ Продажа алкоголя запрещена несовершеннолетним</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/script.js"></script>
+</body>
+</html>
