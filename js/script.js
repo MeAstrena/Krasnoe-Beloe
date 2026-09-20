@@ -1,18 +1,18 @@
-// Мобильное меню
+
 document.querySelector('.mobile-menu-btn')?.addEventListener('click', function() {
   document.querySelector('.nav').classList.toggle('nav--open');
 });
 
-// Фильтры в мобильной версии
+
 const filtersBtn = document.getElementById('filtersBtn');
 const filters = document.getElementById('filters');
 
 if (filtersBtn && filters) {
-  // Показываем кнопку фильтров только на мобильных
+  
   function checkMobile() {
     if (window.innerWidth <= 768) {
       filtersBtn.style.display = 'inline-flex';
-      // Показываем кнопку закрытия в фильтрах
+      
       const closeBtn = filters.querySelector('.filters__title .mobile-menu-btn');
       if (closeBtn) closeBtn.style.display = 'flex';
     } else {
@@ -31,7 +31,7 @@ if (filtersBtn && filters) {
   });
 }
 
-// Плавное появление карточек при скролле
+
 const observerOptions = {
   threshold: 0.1,
   rootMargin: '0px 0px -50px 0px'
@@ -54,10 +54,10 @@ document.querySelectorAll('.product-card, .category-card, .quick-card').forEach(
   observer.observe(el);
 });
 
-// Пересчёт калькулятора (демо)
+
 document.querySelectorAll('.calc-field__input, .calc-field__select').forEach(input => {
   input.addEventListener('change', function() {
-    // Здесь можно добавить реальную логику расчёта
+    
     console.log('Параметры изменены');
   });
 });

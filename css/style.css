@@ -1,4 +1,4 @@
-/* ===== БАЗОВЫЕ СТИЛИ ===== */
+
 :root {
   --red-dark: #8B1A1A;
   --red-mid: #A52A2A;
@@ -59,7 +59,7 @@ img {
   padding: 0 20px;
 }
 
-/* ===== ХЕДЕР ===== */
+
 .header {
   position: sticky;
   top: 0;
@@ -173,7 +173,7 @@ img {
   stroke-width: 2;
 }
 
-/* ===== НАВИГАЦИЯ ===== */
+
 .nav {
   display: flex;
   gap: 4px;
@@ -209,7 +209,7 @@ img {
   color: var(--white);
 }
 
-/* ===== ГЕРОЙ ===== */
+
 .hero {
   padding: 48px 0 40px;
 }
@@ -299,7 +299,7 @@ img {
   box-shadow: var(--shadow-md);
 }
 
-/* ===== БЫСТРЫЕ ДЕЙСТВИЯ ===== */
+
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -354,7 +354,7 @@ img {
   line-height: 1.4;
 }
 
-/* ===== СЕКЦИИ ===== */
+
 .section {
   padding: 40px 0;
 }
@@ -383,7 +383,7 @@ img {
   color: var(--red-mid);
 }
 
-/* ===== СЕТКА КАТЕГОРИЙ ===== */
+
 .categories {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -430,7 +430,7 @@ img {
   color: var(--gray-600);
 }
 
-/* ===== СЕТКА ТОВАРОВ ===== */
+
 .products {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -527,7 +527,7 @@ img {
   background: var(--red-mid);
 }
 
-/* ===== ФИЛЬТРЫ КАТАЛОГА ===== */
+
 .catalog-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -613,7 +613,7 @@ img {
   border-color: var(--red-dark);
 }
 
-/* ===== ПАНЕЛЬ КАТАЛОГА ===== */
+
 .catalog-toolbar {
   display: flex;
   align-items: center;
@@ -661,7 +661,7 @@ img {
   color: var(--gray-400);
 }
 
-/* ===== КАЛЬКУЛЯТОР ===== */
+
 .calc-layout {
   display: grid;
   grid-template-columns: 1fr 360px;
@@ -793,7 +793,7 @@ img {
   box-shadow: 0 8px 24px rgba(0,0,0,0.2);
 }
 
-/* ===== ФУТЕР ===== */
+
 .footer {
   background: var(--gray-50);
   border-top: 1px solid var(--gray-200);
@@ -852,7 +852,7 @@ img {
   gap: 12px;
 }
 
-/* ===== МОБИЛЬНОЕ МЕНЮ ===== */
+
 .mobile-menu-btn {
   display: none;
   width: 40px;
@@ -875,7 +875,7 @@ img {
   stroke-width: 2;
 }
 
-/* ===== АДАПТИВ ===== */
+
 @media (max-width: 1024px) {
   .quick-actions { grid-template-columns: repeat(2, 1fr); }
   .categories { grid-template-columns: repeat(3, 1fr); }
@@ -923,7 +923,7 @@ img {
   .product-card__name { font-size: 13px; }
   .product-card__price { font-size: 16px; }
 
-  /* Каталог: фильтры в модалку / аккордеон */
+  
   .catalog-layout { grid-template-columns: 1fr; gap: 0; }
   .filters {
     position: static;
