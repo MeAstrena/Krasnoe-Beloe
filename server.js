@@ -120,7 +120,7 @@ function badgeLabel(code) {
 function normalizeValue(type, value) {
   let num = Number(value) || 0;
   if (type === 'piece') {
-    num = Math.max(1, Math.round(num));
+    num = Math.max(0, Math.round(num));
   } else {
     num = Math.max(0, num);
   }

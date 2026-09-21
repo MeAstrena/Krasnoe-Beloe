@@ -310,9 +310,67 @@ a {
   background: #BF3B3B;
 }
 
+/* ---------- ФОРМА ТОВАРОВ ---------- */
+
 .admin-form--products {
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #FFFFFF;
+  border: 1.5px solid #E8E8E8;
+  border-radius: 12px;
 }
+
+.admin-form-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-form-row > input,
+.admin-form-row > select {
+  flex: 1 1 160px;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1.5px solid #E8E8E8;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #FFFFFF;
+  font-family: inherit;
+}
+
+.admin-form-row > input:focus,
+.admin-form-row > select:focus {
+  outline: none;
+  border-color: #A52A2A;
+}
+
+.admin-form-row > button {
+  padding: 10px 24px;
+  background: #A52A2A;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.admin-form-row > button:hover {
+  background: #BF3B3B;
+}
+
+.admin-form-row > .admin-type-switch {
+  flex: 0 0 auto;
+}
+
+/* ---------- ЧАСЫ РАБОТЫ ---------- */
 
 .admin-hours {
   display: inline-flex;
@@ -350,6 +408,8 @@ a {
   outline: none;
   border-color: #A52A2A;
 }
+
+/* ---------- ПЕРЕКЛЮЧАТЕЛЬ ТИПА ---------- */
 
 .admin-type-switch {
   display: inline-flex;
@@ -392,6 +452,8 @@ a {
   margin-bottom: 6px;
 }
 
+/* ---------- ПОИСК ---------- */
+
 .admin-search {
   display: flex;
   align-items: center;
@@ -419,6 +481,8 @@ a {
   font-size: 13px;
   color: #6B6B6B;
 }
+
+/* ---------- ТАБЛИЦА ---------- */
 
 .admin-table {
   width: 100%;
@@ -523,6 +587,8 @@ a {
   color: #1A1A1A;
 }
 
+/* ---------- РЕДАКТИРОВАНИЕ В ТАБЛИЦЕ ---------- */
+
 .row-edit {
   display: none;
   background: #FAFAFA;
@@ -567,6 +633,30 @@ tr.is-editing .row-edit {
   gap: 8px;
   align-items: center;
 }
+
+.admin-edit-form--products {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.admin-edit-form--products .admin-form-row > input,
+.admin-edit-form--products .admin-form-row > select {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.admin-edit-form--products .admin-form-row > .admin-type-switch {
+  flex: 0 0 auto;
+}
+
+.admin-edit-form--products .admin-form-row > button {
+  padding: 8px 16px;
+  font-size: 12px;
+}
+
+/* ---------- МЕДИА ---------- */
 
 @media (max-width: 1024px) {
   .admin-stats {
@@ -626,5 +716,19 @@ tr.is-editing .row-edit {
   .admin-table {
     display: block;
     overflow-x: auto;
+  }
+
+  .admin-form-row > input,
+  .admin-form-row > select {
+    flex: 1 1 100%;
+  }
+
+  .admin-form-row > button {
+    width: 100%;
+  }
+
+  .admin-form-row > .admin-type-switch {
+    width: 100%;
+    justify-content: center;
   }
 }
