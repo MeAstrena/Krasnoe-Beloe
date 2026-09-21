@@ -8,16 +8,14 @@
 </head>
 <body>
 
-  
   <header class="header">
     <div class="container">
       <div class="header__top">
         <button class="mobile-menu-btn" aria-label="Меню">
           <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
         </button>
-        <a href="index.html" class="header__logo">
-          <span class="header__logo-mark">КБ</span>
-          Красное&Белое
+        <a href="index.html" class="header__logo" aria-label="Красное&Белое">
+          <img src="https://krasnoeibeloe.ru/local/templates/kb/images/logo.svg" alt="Красное&Белое">
         </a>
         <div class="header__search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -39,7 +37,6 @@
         </div>
       </div>
 
-      
       <nav class="nav">
         <a href="catalog.html" class="nav__item nav__item--active">Каталог</a>
         <a href="#" class="nav__item">Акции</a>
@@ -51,7 +48,6 @@
     </div>
   </header>
 
-  
   <section class="hero">
     <div class="container">
       <div class="hero__banner">
@@ -65,7 +61,6 @@
     </div>
   </section>
 
-  
   <section class="container">
     <div class="quick-actions">
       <a href="catalog.html" class="quick-card">
@@ -99,7 +94,6 @@
     </div>
   </section>
 
-  
   <section class="section">
     <div class="container">
       <div class="section__head">
@@ -131,7 +125,6 @@
     </div>
   </section>
 
-  
   <section class="section">
     <div class="container">
       <div class="section__head">
@@ -179,13 +172,15 @@
     </div>
   </section>
 
-  
   <footer class="footer">
     <div class="container">
       <div class="footer__grid">
         <div>
-          <div class="footer__brand">Красное&Белое</div>
+          <a href="index.html" class="footer__logo" aria-label="Красное&Белое">
+            <img src="https://krasnoeibeloe.ru/local/templates/kb/images/logo.svg" alt="Красное&Белое">
+          </a>
           <p class="footer__text">Сеть магазинов у дома: продукты питания, алкогольные и безалкогольные напитки, промтовары и корма для животных.</p>
+          <p class="footer__legal">ООО «Альфа-М», ОГРН 1147746779025. Товарные знаки «Красное & Белое» принадлежат ООО «Альфа-М».</p>
         </div>
         <div>
           <div class="footer__title">Покупателям</div>
@@ -203,15 +198,28 @@
         </div>
         <div>
           <div class="footer__title">Контакты</div>
-          <a href="tel:88002004090" class="footer__link">8 800 200-40-90</a>
-          <a href="mailto:info@kb.ru" class="footer__link">info@kb.ru</a>
-          <a href="#" class="footer__link">Telegram</a>
-          <a href="#" class="footer__link">ВКонтакте</a>
+          <a href="tel:88001000101" class="footer__phone">8 800 100-01-01</a>
+          <a href="mailto:info@krasnoeibeloe.ru" class="footer__contact">
+            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+            info@krasnoeibeloe.ru
+          </a>
+          <a href="mailto:smi@krasnoe-beloe.ru" class="footer__contact">
+            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+            smi@krasnoe-beloe.ru
+          </a>
+          <a href="https://t.me/krasnoeibeloe" class="footer__contact" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M21 4L3 11l5 2 2 6 4-5 6 4z"/></svg>
+            Telegram
+          </a>
+          <a href="https://vk.com/krasnoeibeloe" class="footer__contact" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/></svg>
+            ВКонтакте
+          </a>
         </div>
       </div>
       <div class="footer__bottom">
         <div>© 2026 Красное&Белое. Все права защищены.</div>
-        <div>18+ Продажа алкоголя запрещена несовершеннолетним</div>
+        <div><span class="footer__age">18+</span>Продажа алкоголя запрещена несовершеннолетним</div>
       </div>
     </div>
   </footer>
