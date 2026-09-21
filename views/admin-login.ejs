@@ -10,10 +10,27 @@
   <form class="admin-login" method="POST" action="/admin/login">
     <h1>Красное&Белое</h1>
     <p>Панель управления</p>
+
     <% if (error) { %>
       <div class="admin-error"><%= error %></div>
     <% } %>
-    <input type="password" name="password" placeholder="Пароль" required autofocus>
+
+    <input
+      type="email"
+      name="login"
+      placeholder="Email"
+      value="<%= typeof login !== 'undefined' ? login : '' %>"
+      required
+      autofocus
+      autocomplete="username">
+
+    <input
+      type="password"
+      name="password"
+      placeholder="Пароль"
+      required
+      autocomplete="current-password">
+
     <button type="submit">Войти</button>
   </form>
 </body>

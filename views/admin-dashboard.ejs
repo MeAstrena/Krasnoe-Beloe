@@ -11,10 +11,12 @@
     <div class="admin-header__logo">КБ Админка</div>
     <nav class="admin-nav">
       <a href="/admin" class="is-active">Обзор</a>
+      <a href="/admin/regions">Регионы</a>
       <a href="/admin/cities">Города</a>
       <a href="/admin/categories">Категории</a>
       <a href="/admin/shops">Магазины</a>
       <a href="/admin/products">Товары</a>
+      <a href="/admin/partners">Доставка</a>
       <a href="/admin/calc-settings">Калькулятор</a>
       <a href="/admin/orders">Заказы</a>
       <a href="/admin/logout" class="admin-nav__logout">Выйти</a>
@@ -24,6 +26,10 @@
   <main class="admin-main">
     <h1>Обзор</h1>
     <div class="admin-stats">
+      <div class="admin-stat">
+        <div class="admin-stat__value"><%= regions %></div>
+        <div class="admin-stat__label">Регионов</div>
+      </div>
       <div class="admin-stat">
         <div class="admin-stat__value"><%= cities %></div>
         <div class="admin-stat__label">Городов</div>
@@ -39,6 +45,10 @@
       <div class="admin-stat">
         <div class="admin-stat__value"><%= products %></div>
         <div class="admin-stat__label">Товаров</div>
+      </div>
+      <div class="admin-stat">
+        <div class="admin-stat__value"><%= partners %></div>
+        <div class="admin-stat__label">Партнёров</div>
       </div>
       <div class="admin-stat">
         <div class="admin-stat__value"><%= orders %></div>

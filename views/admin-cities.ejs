@@ -11,10 +11,14 @@
     <div class="admin-header__logo">КБ Админка</div>
     <nav class="admin-nav">
       <a href="/admin">Обзор</a>
+      <a href="/admin/regions">Регионы</a>
       <a href="/admin/cities" class="is-active">Города</a>
       <a href="/admin/categories">Категории</a>
       <a href="/admin/shops">Магазины</a>
       <a href="/admin/products">Товары</a>
+      <a href="/admin/partners">Доставка</a>
+      <a href="/admin/calc-settings">Калькулятор</a>
+      <a href="/admin/orders">Заказы</a>
       <a href="/admin/logout" class="admin-nav__logout">Выйти</a>
     </nav>
   </header>
@@ -26,14 +30,20 @@
       <div class="admin-alert"><%= error %></div>
     <% } %>
 
-    <form class="admin-form" method="POST" action="/admin/cities">
+    <form class="admin-form--grid" method="POST" action="/admin/cities">
       <input type="text" name="name" placeholder="Название города" required>
+      <select name="regionId">
+        <option value="">Без региона</option>
+        <% regions.forEach(r => { %>
+          <option value="<%= r.id %>"><%= r.name %></option>
+        <% }) %>
+      </select>
       <input type="number" name="shopsCount" placeholder="Кол-во магазинов" min="0">
       <button type="submit">Добавить</button>
     </form>
 
     <div class="admin-search">
-      <input type="text" id="tableSearch" placeholder="Поиск по названию...">
+      <input type="text" id="tableSearch" placeholder="Поиск по названию или региону...">
       <span class="admin-search__count" id="searchCount"></span>
     </div>
 
@@ -41,7 +51,8 @@
       <thead>
         <tr>
           <th>ID</th>
-          <th>Название</th>
+          <th>Город</th>
+          <th>Регион</th>
           <th>Магазинов</th>
           <th></th>
         </tr>
@@ -50,12 +61,9 @@
         <% cities.forEach(city => { %>
           <tr data-id="<%= city.id %>">
             <td><%= city.id %></td>
-            <td class="row-view">
-              <span class="cell-name"><%= city.name %></span>
-            </td>
-            <td class="row-view">
-              <span class="cell-shops"><%= city.shops %></span>
-            </td>
+            <td class="row-view"><span class="cell-name"><%= city.name %></span></td>
+            <td class="row-view"><span class="cell-region"><%= city.regionName %></span></td>
+            <td class="row-view"><span class="cell-shops"><%= city.shops %></span></td>
             <td class="row-view admin-actions">
               <button type="button" class="admin-btn-edit" onclick="editRow(<%= city.id %>)">Изменить</button>
               <form method="POST" action="/admin/cities/<%= city.id %>/delete" onsubmit="return confirm('Удалить город <%= city.name %>?')">
@@ -63,9 +71,15 @@
               </form>
             </td>
 
-            <td class="row-edit" colspan="4">
-              <form method="POST" action="/admin/cities/<%= city.id %>/edit" class="admin-edit-form">
+            <td class="row-edit" colspan="5">
+              <form method="POST" action="/admin/cities/<%= city.id %>/edit" class="admin-edit-form admin-edit-form--grid">
                 <input type="text" name="name" value="<%= city.name %>" required>
+                <select name="regionId">
+                  <option value="">Без региона</option>
+                  <% regions.forEach(r => { %>
+                    <option value="<%= r.id %>" <%= Number(r.id) === Number(city.regionId) ? 'selected' : '' %>><%= r.name %></option>
+                  <% }) %>
+                </select>
                 <input type="number" name="shopsCount" value="<%= city.shops %>" min="0">
                 <button type="submit" class="admin-btn-save">Сохранить</button>
                 <button type="button" class="admin-btn-cancel" onclick="cancelEdit(<%= city.id %>)">Отмена</button>

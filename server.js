@@ -31,6 +31,10 @@ ensureFile('categories.json', []);
 ensureFile('shops.json', []);
 ensureFile('products.json', []);
 ensureFile('orders.json', []);
+ensureFile('regions.json', []);
+ensureFile('partners.json', []);
+ensureFile('stocks.json', []);
+ensureFile('managers.json', []);
 ensureFile('settings.json', {
   calc: {
     serviceFee: 5,
@@ -100,6 +104,29 @@ function sortByName(items, field = 'name') {
   );
 }
 
+const BADGE_LABELS = {
+  'hit': 'ХИТ',
+  'discount': '-20%',
+  'new': 'НОВИНКА',
+  'sale': 'SALE',
+  '1+1': '1+1',
+  '': ''
+};
+
+function badgeLabel(code) {
+  return BADGE_LABELS[code] || '';
+}
+
+function normalizeValue(type, value) {
+  let num = Number(value) || 0;
+  if (type === 'piece') {
+    num = Math.max(1, Math.round(num));
+  } else {
+    num = Math.max(0, num);
+  }
+  return num;
+}
+
 function requireAuth(req, res, next) {
   if (req.session && req.session.isAdmin) return next();
   return res.redirect('/admin/login');
@@ -130,19 +157,31 @@ app.get('/cart.html', (req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'cart.html'));
 });
 
+app.get('/delivery.html', (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'delivery.html'));
+});
+
 app.get('/api/data', (req, res) => {
   const settings = readData('settings.json') || { calc: {} };
+  const products = readData('products.json') || [];
+  const productsWithBadge = products.map(p => ({
+    ...p,
+    badgeLabel: badgeLabel(p.badge)
+  }));
+
   res.json({
     cities: sortByName(readData('cities.json') || []),
     categories: sortByName(readData('categories.json') || []),
     shops: readData('shops.json') || [],
-    products: readData('products.json') || [],
+    products: productsWithBadge,
+    regions: sortByName(readData('regions.json') || []),
+    partners: readData('partners.json') || [],
     settings: settings
   });
 });
 
 app.post('/api/orders', (req, res) => {
-  const { items, subtotal, serviceFee, total, guests, hours, eventType, noAlcohol, budget } = req.body;
+  const { items, subtotal, serviceFee, total, guests, hours, eventType, noAlcohol, budget, shopId } = req.body;
 
   if (!Array.isArray(items) || !items.length) {
     return res.status(400).json({ error: 'Корзина пуста' });
@@ -165,6 +204,7 @@ app.post('/api/orders', (req, res) => {
     eventType: eventType || '',
     noAlcohol: !!noAlcohol,
     budget: Number(budget) || 0,
+    shopId: Number(shopId) || null,
     createdAt: new Date().toISOString()
   };
 
@@ -178,31 +218,55 @@ app.get('/admin/login', (req, res) => {
   if (req.session && req.session.isAdmin) {
     return res.redirect('/admin');
   }
-  res.render('admin-login', { error: null });
+  res.render('admin-login', { error: null, login: '' });
 });
 
 app.post('/admin/login', async (req, res) => {
-  const { password } = req.body;
-  const hash = process.env.ADMIN_PASSWORD_HASH;
+  const { login, password } = req.body;
+  const ownerLogin = process.env.OWNER_LOGIN;
+  const ownerHash = process.env.OWNER_PASSWORD_HASH;
 
-  if (!hash) {
-    return res.render('admin-login', { error: 'Пароль не настроен на сервере' });
+  if (!ownerLogin || !ownerHash) {
+    return res.render('admin-login', {
+      error: 'Владелец не настроен на сервере',
+      login: login || ''
+    });
   }
 
-  if (!password || typeof password !== 'string') {
-    return res.render('admin-login', { error: 'Введите пароль' });
+  if (!login || !password) {
+    return res.render('admin-login', {
+      error: 'Введите логин и пароль',
+      login: login || ''
+    });
+  }
+
+  const loginMatch = login.trim().toLowerCase() === ownerLogin.trim().toLowerCase();
+
+  if (!loginMatch) {
+    return res.render('admin-login', {
+      error: 'Неверный логин или пароль',
+      login: login
+    });
   }
 
   try {
-    const ok = await bcrypt.compare(password, hash);
+    const ok = await bcrypt.compare(password, ownerHash);
     if (!ok) {
-      return res.render('admin-login', { error: 'Неверный пароль' });
+      return res.render('admin-login', {
+        error: 'Неверный логин или пароль',
+        login: login
+      });
     }
     req.session.isAdmin = true;
+    req.session.role = 'owner';
+    req.session.userLogin = ownerLogin;
     return res.redirect('/admin');
   } catch (err) {
     console.error('Ошибка проверки пароля:', err.message);
-    return res.render('admin-login', { error: 'Ошибка сервера' });
+    return res.render('admin-login', {
+      error: 'Ошибка сервера',
+      login: login || ''
+    });
   }
 });
 
@@ -220,22 +284,151 @@ app.get('/admin', requireAuth, (req, res) => {
     categories: (readData('categories.json') || []).length,
     shops: (readData('shops.json') || []).length,
     products: (readData('products.json') || []).length,
+    regions: (readData('regions.json') || []).length,
+    partners: (readData('partners.json') || []).length,
     orders: orders.length
   });
+});
+
+/* ---------- РЕГИОНЫ ---------- */
+
+app.get('/admin/regions', requireAuth, (req, res) => {
+  res.render('admin-regions', {
+    regions: sortByName(readData('regions.json') || []),
+    error: req.query.error || null
+  });
+});
+
+app.post('/admin/regions', requireAuth, (req, res) => {
+  const { name, markup } = req.body;
+  if (!name || !name.trim()) return res.redirect('/admin/regions');
+
+  const regions = readData('regions.json') || [];
+  const normalized = name.trim().toLowerCase();
+  const exists = regions.some(r => r.name.toLowerCase() === normalized);
+
+  if (exists) {
+    return res.redirect('/admin/regions?error=' + encodeURIComponent('Регион «' + name.trim() + '» уже есть'));
+  }
+
+  regions.push({
+    id: nextId(regions),
+    name: name.trim(),
+    markup: Number(markup) || 0
+  });
+
+  writeData('regions.json', regions);
+  res.redirect('/admin/regions');
+});
+
+app.post('/admin/regions/:id/edit', requireAuth, (req, res) => {
+  const id = Number(req.params.id);
+  const { name, markup } = req.body;
+  if (!name || !name.trim()) return res.redirect('/admin/regions');
+
+  const regions = readData('regions.json') || [];
+  const normalized = name.trim().toLowerCase();
+  const duplicate = regions.some(r => r.id !== id && r.name.toLowerCase() === normalized);
+
+  if (duplicate) {
+    return res.redirect('/admin/regions?error=' + encodeURIComponent('Регион «' + name.trim() + '» уже есть'));
+  }
+
+  const updated = regions.map(r =>
+    r.id === id ? { ...r, name: name.trim(), markup: Number(markup) || 0 } : r
+  );
+
+  writeData('regions.json', updated);
+  res.redirect('/admin/regions');
+});
+
+app.post('/admin/regions/:id/delete', requireAuth, (req, res) => {
+  const id = Number(req.params.id);
+  writeData('regions.json', (readData('regions.json') || []).filter(r => r.id !== id));
+
+  const cities = readData('cities.json') || [];
+  const updatedCities = cities.map(c =>
+    Number(c.regionId) === id ? { ...c, regionId: null } : c
+  );
+  writeData('cities.json', updatedCities);
+
+  res.redirect('/admin/regions');
+});
+
+/* ---------- ПАРТНЁРЫ ДОСТАВКИ ---------- */
+
+app.get('/admin/partners', requireAuth, (req, res) => {
+  res.render('admin-partners', {
+    partners: readData('partners.json') || [],
+    error: req.query.error || null
+  });
+});
+
+app.post('/admin/partners', requireAuth, (req, res) => {
+  const { name, description, url, logo } = req.body;
+  if (!name || !name.trim()) return res.redirect('/admin/partners');
+
+  const partners = readData('partners.json') || [];
+  partners.push({
+    id: nextId(partners),
+    name: name.trim(),
+    description: (description && description.trim()) || '',
+    url: (url && url.trim()) || '',
+    logo: (logo && logo.trim()) || ''
+  });
+
+  writeData('partners.json', partners);
+  res.redirect('/admin/partners');
+});
+
+app.post('/admin/partners/:id/edit', requireAuth, (req, res) => {
+  const id = Number(req.params.id);
+  const { name, description, url, logo } = req.body;
+  if (!name || !name.trim()) return res.redirect('/admin/partners');
+
+  const partners = readData('partners.json') || [];
+  const updated = partners.map(p =>
+    p.id === id
+      ? {
+          ...p,
+          name: name.trim(),
+          description: (description && description.trim()) || '',
+          url: (url && url.trim()) || '',
+          logo: (logo && logo.trim()) || ''
+        }
+      : p
+  );
+
+  writeData('partners.json', updated);
+  res.redirect('/admin/partners');
+});
+
+app.post('/admin/partners/:id/delete', requireAuth, (req, res) => {
+  const id = Number(req.params.id);
+  writeData('partners.json', (readData('partners.json') || []).filter(p => p.id !== id));
+  res.redirect('/admin/partners');
 });
 
 /* ---------- ГОРОДА ---------- */
 
 app.get('/admin/cities', requireAuth, (req, res) => {
   const cities = sortByName(readData('cities.json') || []);
+  const regions = sortByName(readData('regions.json') || []);
+
+  const citiesWithRegion = cities.map(c => {
+    const region = regions.find(r => Number(r.id) === Number(c.regionId));
+    return { ...c, regionName: region ? region.name : '—' };
+  });
+
   res.render('admin-cities', {
-    cities,
+    cities: citiesWithRegion,
+    regions,
     error: req.query.error || null
   });
 });
 
 app.post('/admin/cities', requireAuth, (req, res) => {
-  const { name, shopsCount } = req.body;
+  const { name, shopsCount, regionId } = req.body;
   if (!name || !name.trim()) return res.redirect('/admin/cities');
 
   const cities = readData('cities.json') || [];
@@ -249,6 +442,7 @@ app.post('/admin/cities', requireAuth, (req, res) => {
   cities.push({
     id: nextId(cities),
     name: name.trim(),
+    regionId: regionId ? Number(regionId) : null,
     shops: Number(shopsCount) || 0,
     stores: []
   });
@@ -259,8 +453,7 @@ app.post('/admin/cities', requireAuth, (req, res) => {
 
 app.post('/admin/cities/:id/edit', requireAuth, (req, res) => {
   const id = Number(req.params.id);
-  const { name, shopsCount } = req.body;
-
+  const { name, shopsCount, regionId } = req.body;
   if (!name || !name.trim()) return res.redirect('/admin/cities');
 
   const cities = readData('cities.json') || [];
@@ -273,7 +466,12 @@ app.post('/admin/cities/:id/edit', requireAuth, (req, res) => {
 
   const updated = cities.map(c =>
     c.id === id
-      ? { ...c, name: name.trim(), shops: Number(shopsCount) || 0 }
+      ? {
+          ...c,
+          name: name.trim(),
+          regionId: regionId ? Number(regionId) : null,
+          shops: Number(shopsCount) || 0
+        }
       : c
   );
 
@@ -327,7 +525,6 @@ app.post('/admin/categories', requireAuth, (req, res) => {
 app.post('/admin/categories/:id/edit', requireAuth, (req, res) => {
   const id = Number(req.params.id);
   const { name, slug, count } = req.body;
-
   if (!name || !name.trim()) return res.redirect('/admin/categories');
 
   const categories = readData('categories.json') || [];
@@ -456,7 +653,11 @@ app.get('/admin/products', requireAuth, (req, res) => {
 
   const productsWithCat = products.map(p => {
     const cat = categories.find(c => Number(c.id) === Number(p.categoryId));
-    return { ...p, categoryName: cat ? cat.name : '—' };
+    return {
+      ...p,
+      categoryName: cat ? cat.name : '—',
+      badgeLabel: badgeLabel(p.badge)
+    };
   });
 
   productsWithCat.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
@@ -464,16 +665,28 @@ app.get('/admin/products', requireAuth, (req, res) => {
   res.render('admin-products', {
     categories,
     products: productsWithCat,
+    badgeOptions: [
+      { value: '', label: 'Без бейджа' },
+      { value: 'hit', label: 'Хит → ХИТ' },
+      { value: 'discount', label: '-20% → -20%' },
+      { value: 'new', label: 'Новинка → НОВИНКА' },
+      { value: 'sale', label: 'SALE → SALE' },
+      { value: '1+1', label: '1+1 → 1+1' }
+    ],
     error: req.query.error || null
   });
 });
 
 app.post('/admin/products', requireAuth, (req, res) => {
-  const { name, categoryId, brand, price, oldPrice, quantity, weight, badge } = req.body;
+  const {
+    name, categoryId, brand, price, oldPrice,
+    type, value, weight, badge
+  } = req.body;
 
   if (!name || !name.trim()) return res.redirect('/admin/products');
   if (!categoryId) return res.redirect('/admin/products');
   if (!price || isNaN(Number(price))) return res.redirect('/admin/products');
+  if (type !== 'weight' && type !== 'piece') return res.redirect('/admin/products');
 
   const products = readData('products.json') || [];
   const normalized = name.trim().toLowerCase();
@@ -485,6 +698,8 @@ app.post('/admin/products', requireAuth, (req, res) => {
     return res.redirect('/admin/products?error=' + encodeURIComponent('Такой товар уже есть в этой категории'));
   }
 
+  const numValue = normalizeValue(type, value);
+
   products.push({
     id: nextId(products),
     name: name.trim(),
@@ -492,9 +707,12 @@ app.post('/admin/products', requireAuth, (req, res) => {
     brand: (brand && brand.trim()) || '',
     price: Number(price),
     oldPrice: oldPrice ? Number(oldPrice) : null,
-    quantity: Number(quantity) || 0,
+    type: type,
+    unit: type === 'weight' ? 'кг' : 'шт',
     weight: (weight && weight.trim()) || '',
-    badge: (badge && badge.trim()) || ''
+    value: numValue,
+    quantity: numValue,
+    badge: badge || ''
   });
 
   writeData('products.json', products);
@@ -503,11 +721,15 @@ app.post('/admin/products', requireAuth, (req, res) => {
 
 app.post('/admin/products/:id/edit', requireAuth, (req, res) => {
   const id = Number(req.params.id);
-  const { name, categoryId, brand, price, oldPrice, quantity, weight, badge } = req.body;
+  const {
+    name, categoryId, brand, price, oldPrice,
+    type, value, weight, badge
+  } = req.body;
 
   if (!name || !name.trim()) return res.redirect('/admin/products');
   if (!categoryId) return res.redirect('/admin/products');
   if (!price || isNaN(Number(price))) return res.redirect('/admin/products');
+  if (type !== 'weight' && type !== 'piece') return res.redirect('/admin/products');
 
   const products = readData('products.json') || [];
   const normalized = name.trim().toLowerCase();
@@ -521,6 +743,8 @@ app.post('/admin/products/:id/edit', requireAuth, (req, res) => {
     return res.redirect('/admin/products?error=' + encodeURIComponent('Такой товар уже есть в этой категории'));
   }
 
+  const numValue = normalizeValue(type, value);
+
   const updated = products.map(p =>
     p.id === id
       ? {
@@ -530,9 +754,12 @@ app.post('/admin/products/:id/edit', requireAuth, (req, res) => {
           brand: (brand && brand.trim()) || '',
           price: Number(price),
           oldPrice: oldPrice ? Number(oldPrice) : null,
-          quantity: Number(quantity) || 0,
+          type: type,
+          unit: type === 'weight' ? 'кг' : 'шт',
           weight: (weight && weight.trim()) || '',
-          badge: (badge && badge.trim()) || ''
+          value: numValue,
+          quantity: numValue,
+          badge: badge || ''
         }
       : p
   );
@@ -597,12 +824,14 @@ app.post('/admin/orders/:id/delete', requireAuth, (req, res) => {
   res.redirect('/admin/orders');
 });
 
-/* ---------- API ДЛЯ АДМИНКИ ---------- */
+/* ---------- API АДМИНКИ ---------- */
 
 app.get('/api/admin/cities', requireAuthApi, (req, res) => res.json(sortByName(readData('cities.json') || [])));
 app.get('/api/admin/categories', requireAuthApi, (req, res) => res.json(sortByName(readData('categories.json') || [])));
 app.get('/api/admin/shops', requireAuthApi, (req, res) => res.json(readData('shops.json') || []));
 app.get('/api/admin/products', requireAuthApi, (req, res) => res.json(readData('products.json') || []));
+app.get('/api/admin/regions', requireAuthApi, (req, res) => res.json(readData('regions.json') || []));
+app.get('/api/admin/partners', requireAuthApi, (req, res) => res.json(readData('partners.json') || []));
 app.get('/api/admin/settings', requireAuthApi, (req, res) => res.json(readData('settings.json') || {}));
 app.get('/api/admin/orders', requireAuthApi, (req, res) => res.json(readData('orders.json') || []));
 
@@ -621,8 +850,9 @@ app.listen(PORT, () => {
   console.log(`  Сайт:     http://localhost:${PORT}`);
   console.log(`  Админка:  http://localhost:${PORT}/admin`);
   console.log('');
-  if (!process.env.ADMIN_PASSWORD_HASH) {
-    console.log('  ВНИМАНИЕ: ADMIN_PASSWORD_HASH не задан в .env');
+  if (!process.env.OWNER_LOGIN || !process.env.OWNER_PASSWORD_HASH) {
+    console.log('  ВНИМАНИЕ: OWNER_LOGIN или OWNER_PASSWORD_HASH не заданы в .env');
+    console.log('  Вход в админку невозможен.');
     console.log('');
   }
   if (!process.env.SESSION_SECRET) {
