@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админка — Магазины</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-page">
+  <header class="admin-header">
+    <div class="admin-header__logo">КБ Админка</div>
+    <nav class="admin-nav">
+      <a href="/admin">Обзор</a>
+      <a href="/admin/cities">Города</a>
+      <a href="/admin/categories">Категории</a>
+      <a href="/admin/shops" class="is-active">Магазины</a>
+      <a href="/admin/logout" class="admin-nav__logout">Выйти</a>
+    </nav>
+  </header>
+
+  <main class="admin-main">
+    <h1>Магазины</h1>
+
+    <form class="admin-form" method="POST" action="/admin/shops">
+      <select name="cityId" required>
+        <option value="">Выберите город</option>
+        <% cities.forEach(city => { %>
+          <option value="<%= city.id %>"><%= city.name %></option>
+        <% }) %>
+      </select>
+      <input type="text" name="address" placeholder="Адрес" required>
+      <input type="text" name="hours" placeholder="Часы работы" value="08:00–23:00">
+      <input type="text" name="metro" placeholder="Район / метро">
+      <button type="submit">Добавить</button>
+    </form>
+
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Город</th>
+          <th>Адрес</th>
+          <th>Часы</th>
+          <th>Район</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% shops.forEach(shop => { %>
+          <% const city = cities.find(c => c.id === shop.cityId) %>
+          <tr>
+            <td><%= shop.id %></td>
+            <td><%= city ? city.name : '—' %></td>
+            <td><%= shop.address %></td>
+            <td><%= shop.hours %></td>
+            <td><%= shop.metro || '—' %></td>
+            <td>
+              <form method="POST" action="/admin/shops/<%= shop.id %>/delete" onsubmit="return confirm('Удалить?')">
+                <button type="submit" class="admin-btn-delete">Удалить</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>

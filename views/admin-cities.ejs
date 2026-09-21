@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админка — Города</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-page">
+  <header class="admin-header">
+    <div class="admin-header__logo">КБ Админка</div>
+    <nav class="admin-nav">
+      <a href="/admin">Обзор</a>
+      <a href="/admin/cities" class="is-active">Города</a>
+      <a href="/admin/categories">Категории</a>
+      <a href="/admin/shops">Магазины</a>
+      <a href="/admin/logout" class="admin-nav__logout">Выйти</a>
+    </nav>
+  </header>
+
+  <main class="admin-main">
+    <h1>Города</h1>
+
+    <form class="admin-form" method="POST" action="/admin/cities">
+      <input type="text" name="name" placeholder="Название города" required>
+      <input type="number" name="shopsCount" placeholder="Кол-во магазинов" min="0">
+      <button type="submit">Добавить</button>
+    </form>
+
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Название</th>
+          <th>Магазинов</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% cities.forEach(city => { %>
+          <tr>
+            <td><%= city.id %></td>
+            <td><%= city.name %></td>
+            <td><%= city.shops %></td>
+            <td>
+              <form method="POST" action="/admin/cities/<%= city.id %>/delete" onsubmit="return confirm('Удалить?')">
+                <button type="submit" class="admin-btn-delete">Удалить</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>

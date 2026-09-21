@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход в админку</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-login-page">
+  <form class="admin-login" method="POST" action="/admin/login">
+    <h1>Красное&Белое</h1>
+    <p>Панель управления</p>
+    <% if (error) { %>
+      <div class="admin-error"><%= error %></div>
+    <% } %>
+    <input type="password" name="password" placeholder="Пароль" required autofocus>
+    <button type="submit">Войти</button>
+  </form>
+</body>
+</html>
