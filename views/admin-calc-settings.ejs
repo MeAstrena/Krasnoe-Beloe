@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админка — Настройки калькулятора</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-page">
+  <header class="admin-header">
+    <div class="admin-header__logo">КБ Админка</div>
+    <nav class="admin-nav">
+      <a href="/admin">Обзор</a>
+      <a href="/admin/cities">Города</a>
+      <a href="/admin/categories">Категории</a>
+      <a href="/admin/shops">Магазины</a>
+      <a href="/admin/products">Товары</a>
+      <a href="/admin/calc-settings" class="is-active">Калькулятор</a>
+      <a href="/admin/logout" class="admin-nav__logout">Выйти</a>
+    </nav>
+  </header>
+
+  <main class="admin-main">
+    <h1>Настройки калькулятора</h1>
+
+    <% if (error) { %>
+      <div class="admin-alert"><%= error %></div>
+    <% } %>
+
+    <form class="admin-form--grid" method="POST" action="/admin/calc-settings">
+      <div>
+        <label class="admin-label">Сервисный сбор, %</label>
+        <input type="number" name="serviceFee" value="<%= calc.serviceFee || 5 %>" min="0" max="100" step="0.1">
+      </div>
+
+      <div>
+        <label class="admin-label">Мин. гостей</label>
+        <input type="number" name="minGuests" value="<%= calc.minGuests || 5 %>" min="1">
+      </div>
+
+      <div>
+        <label class="admin-label">Макс. гостей</label>
+        <input type="number" name="maxGuests" value="<%= calc.maxGuests || 100 %>" min="1">
+      </div>
+
+      <div>
+        <label class="admin-label">Мин. часов</label>
+        <input type="number" name="minHours" value="<%= calc.minHours || 1 %>" min="1">
+      </div>
+
+      <div>
+        <label class="admin-label">Макс. часов</label>
+        <input type="number" name="maxHours" value="<%= calc.maxHours || 12 %>" min="1">
+      </div>
+
+      <div>
+        <label class="admin-label">Свадьба, +%</label>
+        <input type="number" name="wedding" value="<%= (calc.eventMultipliers && calc.eventMultipliers.wedding) || 20 %>" min="0" max="100">
+      </div>
+
+      <div>
+        <label class="admin-label">Корпоратив, +%</label>
+        <input type="number" name="corporate" value="<%= (calc.eventMultipliers && calc.eventMultipliers.corporate) || 10 %>" min="0" max="100">
+      </div>
+
+      <div>
+        <label class="admin-label">День рождения, +%</label>
+        <input type="number" name="birthday" value="<%= (calc.eventMultipliers && calc.eventMultipliers.birthday) || 5 %>" min="0" max="100">
+      </div>
+
+      <div>
+        <label class="admin-label">Вечеринка, +%</label>
+        <input type="number" name="party" value="<%= (calc.eventMultipliers && calc.eventMultipliers.party) || 5 %>" min="0" max="100">
+      </div>
+
+      <button type="submit">Сохранить</button>
+    </form>
+  </main>
+</body>
+</html>

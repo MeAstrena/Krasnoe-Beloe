@@ -1,6 +1,32 @@
 [
-  { "id": 1, "name": "Алкоголь", "slug": "alkogol", "count": 2400 },
-  { "id": 2, "name": "Молочные продукты", "slug": "moloko", "count": 850 },
-  { "id": 3, "name": "Вкусный перекус", "slug": "perekus", "count": 620 },
-  { "id": 4, "name": "Мясные изделия", "slug": "myaso", "count": 430 }
+  {
+    "id": 1,
+    "name": "Алкоголь",
+    "slug": "alkogol",
+    "count": 2400
+  },
+  {
+    "id": 2,
+    "name": "Молочные продукты",
+    "slug": "moloko",
+    "count": 850
+  },
+  {
+    "id": 3,
+    "name": "Вкусный перекус",
+    "slug": "perekus",
+    "count": 620
+  },
+  {
+    "id": 4,
+    "name": "Мясные изделия",
+    "slug": "myaso",
+    "count": 430
+  },
+  {
+    "id": 1789997847203,
+    "name": "Конфеты",
+    "slug": "candies",
+    "count": 790
+  }
 ]

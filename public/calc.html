@@ -12,7 +12,6 @@
     <div class="header__topbar">
       <div class="container">
         <div class="header__topbar-inner">
-
           <div class="header__location">
             <button type="button" class="header__loc-item" id="cityBtn" data-loc="city">
               <span id="cityLabel">Загрузка…</span>
@@ -26,7 +25,6 @@
               <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
           </div>
-
           <nav class="header__topmenu">
             <a href="#" class="header__topmenu-link header__topmenu-link--strong">For producers</a>
             <a href="#" class="header__topmenu-link">Аренда</a>
@@ -34,18 +32,12 @@
             <a href="#" class="header__topmenu-link">Партнерам</a>
             <a href="#" class="header__topmenu-link">Пресс-центр</a>
             <a href="#" class="header__topmenu-link">Контакты</a>
-            <a href="#" class="header__topmenu-link">
-              FAQ
-              <span class="header__faq-icon">?</span>
-            </a>
+            <a href="#" class="header__topmenu-link">FAQ <span class="header__faq-icon">?</span></a>
           </nav>
-
         </div>
       </div>
-
       <div class="loc-dropdown" id="locDropdown">
         <div class="loc-dropdown__inner">
-
           <div class="loc-dropdown__col loc-dropdown__col--left">
             <div class="loc-dropdown__title">Выберите город</div>
             <div class="loc-dropdown__search">
@@ -54,7 +46,6 @@
             </div>
             <div class="loc-dropdown__list" id="cityList"></div>
           </div>
-
           <div class="loc-dropdown__col loc-dropdown__col--right">
             <div class="loc-dropdown__title" id="shopTitle">Выберите магазин</div>
             <div class="loc-dropdown__search">
@@ -63,7 +54,6 @@
             </div>
             <div class="loc-dropdown__list" id="shopList"></div>
           </div>
-
         </div>
       </div>
     </div>
@@ -81,13 +71,10 @@
           <input type="search" placeholder="Найти товар, категорию или бренд">
         </div>
         <div class="header__actions">
-          <a href="#" class="header__btn">
-            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span>Магазин</span>
-          </a>
-          <a href="#" class="header__btn header__btn--primary">
+          <a href="/cart.html" class="header__btn header__btn--primary">
             <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></svg>
             <span>Корзина</span>
+            <span class="cart-badge" data-cart-count style="display:none">0</span>
           </a>
         </div>
       </div>
@@ -109,7 +96,9 @@
       <span>Банкетный калькулятор</span>
     </div>
     <h1 class="section__title" style="padding: 16px 0 0;">Банкетный калькулятор</h1>
-    <p style="color: var(--gray-600); font-size: 15px; padding-bottom: 8px;">Рассчитайте количество напитков и продуктов для вашего мероприятия</p>
+    <p style="color: var(--gray-600); font-size: 15px; padding-bottom: 8px;">
+      Укажите параметры мероприятия и соберите корзину сами. Мы поможем подобрать товары под бюджет.
+    </p>
   </div>
 
   <div class="container">
@@ -118,92 +107,105 @@
       <div>
         <div class="calc-card">
           <div class="calc-card__title">Параметры мероприятия</div>
-          <div class="calc-card__desc">Укажите количество гостей и продолжительность</div>
+          <div class="calc-card__desc">Укажите количество гостей, продолжительность и тип</div>
 
           <div class="calc-row">
             <div class="calc-field">
-              <label class="calc-field__label">Количество гостей</label>
-              <input type="number" class="calc-field__input" value="20" min="1">
+              <label class="calc-field__label">
+                Гостей (от <span id="minGuestsLabel">5</span> до <span id="maxGuestsLabel">100</span>)
+              </label>
+              <input type="number" class="calc-field__input" id="calcGuests" value="20" min="5" max="100">
             </div>
             <div class="calc-field">
-              <label class="calc-field__label">Продолжительность, ч</label>
-              <input type="number" class="calc-field__input" value="4" min="1">
+              <label class="calc-field__label">
+                Часов (от <span id="minHoursLabel">1</span> до <span id="maxHoursLabel">12</span>)
+              </label>
+              <input type="number" class="calc-field__input" id="calcHours" value="4" min="1" max="12">
             </div>
+          </div>
+
+          <div class="calc-field">
+            <label class="calc-field__label">Бюджет, ₽ (необязательно)</label>
+            <input type="number" class="calc-field__input" id="calcBudget" placeholder="Например, 15000" min="0">
           </div>
 
           <div class="calc-field">
             <label class="calc-field__label">Тип мероприятия</label>
-            <select class="calc-field__select">
-              <option>Свадьба</option>
-              <option>Корпоратив</option>
-              <option>День рождения</option>
-              <option>Дружеская вечеринка</option>
+            <select class="calc-field__select" id="calcEventType">
+              <option value="wedding">Свадьба (+20%)</option>
+              <option value="corporate">Корпоратив (+10%)</option>
+              <option value="birthday">День рождения (+5%)</option>
+              <option value="party">Дружеская вечеринка (+5%)</option>
             </select>
           </div>
 
-          <div class="calc-field">
-            <label class="calc-field__label">Магазин</label>
-            <select class="calc-field__select">
-              <option>Выберите магазин</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="calc-card">
-          <div class="calc-card__title">Напитки и продукты</div>
-          <div class="calc-card__desc">Отметьте, что планируете заказать</div>
-
-          <label class="filters__option" style="padding:10px 0; font-size:14px;">
-            <input type="checkbox" checked> Алкогольные напитки
-          </label>
-          <label class="filters__option" style="padding:10px 0; font-size:14px;">
-            <input type="checkbox" checked> Безалкогольные напитки
-          </label>
-          <label class="filters__option" style="padding:10px 0; font-size:14px;">
-            <input type="checkbox" checked> Закуски
-          </label>
-          <label class="filters__option" style="padding:10px 0; font-size:14px;">
-            <input type="checkbox"> Десерты
+          <label class="filters__option" style="padding:12px 0; font-size:14px;">
+            <input type="checkbox" id="calcNoAlcohol"> Без алкоголя
           </label>
         </div>
       </div>
 
-      <div class="calc-result">
-        <div class="calc-result__title">Предварительный расчёт</div>
+      <div>
+        <div class="calc-result">
+          <div class="calc-result__title">Ваш банкет</div>
 
-        <div class="calc-result__row">
-          <span>Гостей</span>
-          <span class="calc-result__value">20 чел.</span>
-        </div>
-        <div class="calc-result__row">
-          <span>Шампанское</span>
-          <span class="calc-result__value">6 бут.</span>
-        </div>
-        <div class="calc-result__row">
-          <span>Вино</span>
-          <span class="calc-result__value">8 бут.</span>
-        </div>
-        <div class="calc-result__row">
-          <span>Крепкий алкоголь</span>
-          <span class="calc-result__value">4 бут.</span>
-        </div>
-        <div class="calc-result__row">
-          <span>Безалкогольные</span>
-          <span class="calc-result__value">12 л</span>
-        </div>
-        <div class="calc-result__row">
-          <span>Закуски</span>
-          <span class="calc-result__value">~6 кг</span>
-        </div>
+          <div class="calc-result__row">
+            <span>Гостей</span>
+            <span class="calc-result__value" id="resGuests">20 чел.</span>
+          </div>
+          <div class="calc-result__row">
+            <span>Часов</span>
+            <span class="calc-result__value" id="resHours">4 ч</span>
+          </div>
+          <div class="calc-result__row">
+            <span>Товаров в корзине</span>
+            <span class="calc-result__value" id="resCount">0</span>
+          </div>
+          <div class="calc-result__row">
+            <span>Сумма товаров</span>
+            <span class="calc-result__value" id="resSubtotal">0,00 ₽</span>
+          </div>
+          <div class="calc-result__row">
+            <span>Сервисный сбор (<span id="resFeePct">5</span>%)</span>
+            <span class="calc-result__value" id="resFee">0,00 ₽</span>
+          </div>
+          <div class="calc-result__row" id="resBudgetRow" style="display:none;">
+            <span>Бюджет</span>
+            <span class="calc-result__value" id="resBudget">—</span>
+          </div>
+          <div class="calc-result__row" id="resRemainRow" style="display:none;">
+            <span>Остаток бюджета</span>
+            <span class="calc-result__value" id="resRemain">—</span>
+          </div>
 
-        <div class="calc-result__total">
-          <span class="calc-result__total-label">Итого</span>
-          <span class="calc-result__total-value">~18 400 ₽</span>
-        </div>
+          <div class="calc-result__total">
+            <span class="calc-result__total-label">Итого</span>
+            <span class="calc-result__total-value" id="resTotal">0,00 ₽</span>
+          </div>
 
-        <button class="calc-result__btn">Сохранить расчёт</button>
+          <button type="button" class="calc-result__btn" id="calcResetBtn">Очистить корзину</button>
+          <button type="button" class="calc-result__btn calc-result__btn--primary" id="calcCheckoutBtn">Оформить заказ</button>
+        </div>
       </div>
 
+    </div>
+
+    <div class="calc-suggest-wrap">
+      <h2 class="calc-suggest-wrap__title">Подборка товаров</h2>
+      <p class="calc-suggest-wrap__desc">
+        Добавляйте товары в корзину — сумма автоматически пересчитается с учётом типа мероприятия и сервисного сбора.
+      </p>
+
+      <div class="calc-suggest" id="calcSuggest"></div>
+      <button type="button" class="btn btn--red" id="calcAddAll" style="display:none; margin-top:16px;">
+        Добавить всё в корзину
+      </button>
+    </div>
+
+    <div class="calc-suggest-wrap">
+      <h2 class="calc-suggest-wrap__title">Хиты недели</h2>
+      <p class="calc-suggest-wrap__desc">Популярные товары — можно добавить к банкету</p>
+      <div class="calc-suggest__grid" id="calcFeatured"></div>
     </div>
   </div>
 
@@ -259,6 +261,8 @@
     </div>
   </footer>
 
+  <script src="/js/cart.js"></script>
+  <script src="/js/calc.js"></script>
   <script src="/js/script.js"></script>
 </body>
 </html>

@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1,
+    "name": "Кристина",
+    "categoryId": 1789997847203,
+    "brand": "Astrena",
+    "price": 999999999999,
+    "oldPrice": 100000000001,
+    "quantity": 1,
+    "weight": "67.2 кг",
+    "badge": "Хит"
+  }
+]

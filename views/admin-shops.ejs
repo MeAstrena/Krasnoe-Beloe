@@ -14,6 +14,7 @@
       <a href="/admin/cities">Города</a>
       <a href="/admin/categories">Категории</a>
       <a href="/admin/shops" class="is-active">Магазины</a>
+      <a href="/admin/products">Товары</a>
       <a href="/admin/logout" class="admin-nav__logout">Выйти</a>
     </nav>
   </header>
@@ -21,20 +22,38 @@
   <main class="admin-main">
     <h1>Магазины</h1>
 
-    <form class="admin-form" method="POST" action="/admin/shops">
+    <% if (error) { %>
+      <div class="admin-alert"><%= error %></div>
+    <% } %>
+
+    <form class="admin-form--shops" method="POST" action="/admin/shops">
       <select name="cityId" required>
         <option value="">Выберите город</option>
         <% cities.forEach(city => { %>
           <option value="<%= city.id %>"><%= city.name %></option>
         <% }) %>
       </select>
+
       <input type="text" name="address" placeholder="Адрес" required>
-      <input type="text" name="hours" placeholder="Часы работы" value="08:00–23:00">
       <input type="text" name="metro" placeholder="Район / метро">
+
+      <div class="admin-hours">
+        <span class="admin-hours__label">Время работы:</span>
+        <span class="admin-hours__word">с</span>
+        <input type="time" name="hoursFrom" value="08:00" step="60" required>
+        <span class="admin-hours__word">по</span>
+        <input type="time" name="hoursTo" value="23:00" step="60" required>
+      </div>
+
       <button type="submit">Добавить</button>
     </form>
 
-    <table class="admin-table">
+    <div class="admin-search">
+      <input type="text" id="tableSearch" placeholder="Поиск по городу, адресу или району...">
+      <span class="admin-search__count" id="searchCount"></span>
+    </div>
+
+    <table class="admin-table" id="dataTable">
       <thead>
         <tr>
           <th>ID</th>
@@ -47,16 +66,39 @@
       </thead>
       <tbody>
         <% shops.forEach(shop => { %>
-          <% const city = cities.find(c => c.id === shop.cityId) %>
-          <tr>
+          <% const parts = (shop.hours || '').split('–'); %>
+          <% const hFrom = parts[0] || '08:00'; %>
+          <% const hTo = parts[1] || '23:00'; %>
+          <tr data-id="<%= shop.id %>">
             <td><%= shop.id %></td>
-            <td><%= city ? city.name : '—' %></td>
-            <td><%= shop.address %></td>
-            <td><%= shop.hours %></td>
-            <td><%= shop.metro || '—' %></td>
-            <td>
-              <form method="POST" action="/admin/shops/<%= shop.id %>/delete" onsubmit="return confirm('Удалить?')">
+            <td class="row-view"><span class="cell-city"><%= shop.cityName %></span></td>
+            <td class="row-view"><span class="cell-address"><%= shop.address %></span></td>
+            <td class="row-view"><span class="cell-hours"><%= shop.hours %></span></td>
+            <td class="row-view"><span class="cell-metro"><%= shop.metro || '—' %></span></td>
+            <td class="row-view admin-actions">
+              <button type="button" class="admin-btn-edit" onclick="editRow(<%= shop.id %>)">Изменить</button>
+              <form method="POST" action="/admin/shops/<%= shop.id %>/delete" onsubmit="return confirm('Удалить магазин?')">
                 <button type="submit" class="admin-btn-delete">Удалить</button>
+              </form>
+            </td>
+
+            <td class="row-edit" colspan="6">
+              <form method="POST" action="/admin/shops/<%= shop.id %>/edit" class="admin-edit-form">
+                <select name="cityId" required>
+                  <% cities.forEach(city => { %>
+                    <option value="<%= city.id %>" <%= Number(city.id) === Number(shop.cityId) ? 'selected' : '' %>><%= city.name %></option>
+                  <% }) %>
+                </select>
+                <input type="text" name="address" value="<%= shop.address %>" required>
+                <input type="text" name="metro" value="<%= shop.metro || '' %>" placeholder="Район / метро">
+                <div class="admin-hours">
+                  <span class="admin-hours__word">с</span>
+                  <input type="time" name="hoursFrom" value="<%= hFrom %>" step="60" required>
+                  <span class="admin-hours__word">по</span>
+                  <input type="time" name="hoursTo" value="<%= hTo %>" step="60" required>
+                </div>
+                <button type="submit" class="admin-btn-save">Сохранить</button>
+                <button type="button" class="admin-btn-cancel" onclick="cancelEdit(<%= shop.id %>)">Отмена</button>
               </form>
             </td>
           </tr>
@@ -64,5 +106,7 @@
       </tbody>
     </table>
   </main>
+
+  <script src="/js/admin.js"></script>
 </body>
 </html>

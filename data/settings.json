@@ -1,0 +1,15 @@
+{
+  "calc": {
+    "serviceFee": 5,
+    "minGuests": 5,
+    "maxGuests": 100,
+    "minHours": 1,
+    "maxHours": 12,
+    "eventMultipliers": {
+      "wedding": 20,
+      "corporate": 10,
+      "birthday": 5,
+      "party": 5
+    }
+  }
+}
