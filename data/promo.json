@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "code": "ДАЗДРАВСТВУЕТАСТРЕНА",
+    "type": "percent",
+    "value": 30,
+    "appliesTo": "products",
+    "categoryIds": [
+      1,
+      1789997847203
+    ],
+    "productIds": [],
+    "brandNames": [
+      "Astrena"
+    ],
+    "minSubtotal": 200,
+    "validFrom": "01.09.2026",
+    "validUntil": "23.09.2026",
+    "usageLimit": 10,
+    "usedCount": 0,
+    "active": true,
+    "createdAt": "2026-09-21T20:14:11.752Z"
+  },
+  {
+    "id": 2,
+    "code": "ПРИВЕТСТВУЮТЕБЯПУТНИК",
+    "type": "fixed",
+    "value": 100000000000,
+    "appliesTo": "products",
+    "categoryIds": [
+      1789997847203
+    ],
+    "productIds": [
+      1
+    ],
+    "brandNames": [
+      "Astrena"
+    ],
+    "minSubtotal": 1,
+    "validFrom": "",
+    "validUntil": "",
+    "usageLimit": 10,
+    "usedCount": 0,
+    "active": true,
+    "createdAt": "2026-09-21T20:19:48.688Z"
+  }
+]

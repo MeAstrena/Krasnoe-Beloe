@@ -11,10 +11,15 @@
     <div class="admin-header__logo">КБ Админка</div>
     <nav class="admin-nav">
       <a href="/admin">Обзор</a>
+      <a href="/admin/regions">Регионы</a>
       <a href="/admin/cities">Города</a>
       <a href="/admin/categories">Категории</a>
       <a href="/admin/shops" class="is-active">Магазины</a>
       <a href="/admin/products">Товары</a>
+      <a href="/admin/delivery">Партнеры</a>
+      <a href="/admin/promo">Промокоды</a>
+      <a href="/admin/calc-settings">Калькулятор</a>
+      <a href="/admin/orders">Заказы</a>
       <a href="/admin/logout" class="admin-nav__logout">Выйти</a>
     </nav>
   </header>
@@ -24,6 +29,27 @@
 
     <% if (error) { %>
       <div class="admin-alert"><%= error %></div>
+    <% } %>
+
+    <% if (newPassword && newLogin) { %>
+      <div class="admin-credentials">
+        <div class="admin-credentials__title">
+          Магазин #<%= shopId %> создан. Данные для менеджера:
+        </div>
+        <div class="admin-credentials__row">
+          <span class="admin-credentials__label">Логин:</span>
+          <code class="admin-credentials__value" id="credLogin"><%= newLogin %></code>
+          <button type="button" class="admin-credentials__copy" onclick="copyCred('credLogin')">Копировать</button>
+        </div>
+        <div class="admin-credentials__row">
+          <span class="admin-credentials__label">Пароль:</span>
+          <code class="admin-credentials__value" id="credPassword"><%= newPassword %></code>
+          <button type="button" class="admin-credentials__copy" onclick="copyCred('credPassword')">Копировать</button>
+        </div>
+        <div class="admin-credentials__warning">
+          ⚠️ Сохраните пароль — больше он не будет показан. Если потеряете, используйте «Сбросить пароль».
+        </div>
+      </div>
     <% } %>
 
     <form class="admin-form--shops" method="POST" action="/admin/shops">
@@ -48,8 +74,13 @@
       <button type="submit">Добавить</button>
     </form>
 
+    <p class="admin-hint">
+      При добавлении магазина автоматически создаётся аккаунт менеджера с логином <code>shop-&lt;id&gt;@kb.ru</code>.
+      Данные показываются один раз после создания.
+    </p>
+
     <div class="admin-search">
-      <input type="text" id="tableSearch" placeholder="Поиск по городу, адресу или району...">
+      <input type="text" id="tableSearch" placeholder="Поиск по городу, адресу или логину...">
       <span class="admin-search__count" id="searchCount"></span>
     </div>
 
@@ -61,6 +92,7 @@
           <th>Адрес</th>
           <th>Часы</th>
           <th>Район</th>
+          <th>Логин менеджера</th>
           <th></th>
         </tr>
       </thead>
@@ -75,14 +107,20 @@
             <td class="row-view"><span class="cell-address"><%= shop.address %></span></td>
             <td class="row-view"><span class="cell-hours"><%= shop.hours %></span></td>
             <td class="row-view"><span class="cell-metro"><%= shop.metro || '—' %></span></td>
+            <td class="row-view">
+              <code class="shop-login"><%= shop.managerLogin %></code>
+            </td>
             <td class="row-view admin-actions">
               <button type="button" class="admin-btn-edit" onclick="editRow(<%= shop.id %>)">Изменить</button>
-              <form method="POST" action="/admin/shops/<%= shop.id %>/delete" onsubmit="return confirm('Удалить магазин?')">
+              <form method="POST" action="/admin/shops/<%= shop.id %>/reset-password" onsubmit="return confirm('Сбросить пароль менеджера? Старый перестанет работать.')" style="display:inline">
+                <button type="submit" class="admin-btn-reset">Сбросить пароль</button>
+              </form>
+              <form method="POST" action="/admin/shops/<%= shop.id %>/delete" onsubmit="return confirm('Удалить магазин и его менеджера?')" style="display:inline">
                 <button type="submit" class="admin-btn-delete">Удалить</button>
               </form>
             </td>
 
-            <td class="row-edit" colspan="6">
+            <td class="row-edit" colspan="7">
               <form method="POST" action="/admin/shops/<%= shop.id %>/edit" class="admin-edit-form">
                 <select name="cityId" required>
                   <% cities.forEach(city => { %>
@@ -107,6 +145,30 @@
     </table>
   </main>
 
+  <script>
+    function copyCred(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const text = el.textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          const btn = el.parentElement.querySelector('.admin-credentials__copy');
+          if (btn) {
+            const original = btn.textContent;
+            btn.textContent = '✓ Скопировано';
+            setTimeout(function () { btn.textContent = original; }, 1500);
+          }
+        });
+      } else {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        try { document.execCommand('copy'); } catch (e) {}
+      }
+    }
+  </script>
   <script src="/js/admin.js"></script>
 </body>
 </html>

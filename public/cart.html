@@ -12,7 +12,6 @@
     <div class="header__topbar">
       <div class="container">
         <div class="header__topbar-inner">
-
           <div class="header__location">
             <button type="button" class="header__loc-item" id="cityBtn" data-loc="city">
               <span id="cityLabel">Загрузка…</span>
@@ -26,7 +25,6 @@
               <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
           </div>
-
           <nav class="header__topmenu">
             <a href="#" class="header__topmenu-link header__topmenu-link--strong">For producers</a>
             <a href="#" class="header__topmenu-link">Аренда</a>
@@ -34,18 +32,12 @@
             <a href="#" class="header__topmenu-link">Партнерам</a>
             <a href="#" class="header__topmenu-link">Пресс-центр</a>
             <a href="#" class="header__topmenu-link">Контакты</a>
-            <a href="#" class="header__topmenu-link">
-              FAQ
-              <span class="header__faq-icon">?</span>
-            </a>
+            <a href="#" class="header__topmenu-link">FAQ <span class="header__faq-icon">?</span></a>
           </nav>
-
         </div>
       </div>
-
       <div class="loc-dropdown" id="locDropdown">
         <div class="loc-dropdown__inner">
-
           <div class="loc-dropdown__col loc-dropdown__col--left">
             <div class="loc-dropdown__title">Выберите город</div>
             <div class="loc-dropdown__search">
@@ -54,7 +46,6 @@
             </div>
             <div class="loc-dropdown__list" id="cityList"></div>
           </div>
-
           <div class="loc-dropdown__col loc-dropdown__col--right">
             <div class="loc-dropdown__title" id="shopTitle">Выберите магазин</div>
             <div class="loc-dropdown__search">
@@ -63,7 +54,6 @@
             </div>
             <div class="loc-dropdown__list" id="shopList"></div>
           </div>
-
         </div>
       </div>
     </div>
@@ -93,13 +83,18 @@
         </div>
       </div>
 
-      <nav class="nav">
-        <a href="/catalog.html" class="nav__item">Каталог</a>
-        <a href="#" class="nav__item">Акции</a>
-        <a href="#" class="nav__item">Магазины</a>
-        <a href="/calc.html" class="nav__item">Банкетный калькулятор</a>
-        <a href="#" class="nav__item">Доставка</a>
-      </nav>
+      <div class="nav-wrap">
+        <nav class="nav" data-nav>
+          <a href="/catalog.html" class="nav__item">Каталог</a>
+          <a href="#" class="nav__item">Акции</a>
+          <a href="#" class="nav__item">Магазины</a>
+          <a href="/calc.html" class="nav__item">Банкетный калькулятор</a>
+          <a href="/delivery.html" class="nav__item">Доставка</a>
+        </nav>
+        <div class="nav-scrollbar">
+          <div class="nav-scrollbar__thumb"></div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -162,7 +157,7 @@
           <a href="/catalog.html" class="footer__link">Каталог</a>
           <a href="#" class="footer__link">Акции</a>
           <a href="/calc.html" class="footer__link">Калькулятор</a>
-          <a href="#" class="footer__link">Доставка</a>
+          <a href="/delivery.html" class="footer__link">Доставка</a>
         </div>
         <div>
           <div class="footer__title">Компания</div>
@@ -194,7 +189,7 @@
       </div>
       <div class="footer__bottom">
         <div>© 2026 Красное&Белое. Все права защищены.</div>
-        <div><span class="footer__age">18+</span>Продажа алкоголя запрещена несовершеннолетним</div>
+        <div><span class="footer__age">18+</span>Продажа алкоголя запрещена несовершеннолетними</div>
       </div>
     </div>
   </footer>

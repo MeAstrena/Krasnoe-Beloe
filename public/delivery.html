@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Доставка — Красное&Белое</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="theme-dark">
+
+  <header class="header header--dark">
+    <div class="header__topbar">
+      <div class="container">
+        <div class="header__topbar-inner">
+          <div class="header__location">
+            <button type="button" class="header__loc-item" id="cityBtn" data-loc="city">
+              <span id="cityLabel">Загрузка…</span>
+              <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <button type="button" class="header__loc-item" id="shopBtn" data-loc="shop">
+              <span id="shopLabel">Загрузка…</span>
+              <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <button type="button" class="header__loc-clear" id="shopClear" aria-label="Сбросить магазин">
+              <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <nav class="header__topmenu">
+            <a href="#" class="header__topmenu-link header__topmenu-link--strong">For producers</a>
+            <a href="#" class="header__topmenu-link">Аренда</a>
+            <a href="#" class="header__topmenu-link">О компании</a>
+            <a href="#" class="header__topmenu-link">Партнерам</a>
+            <a href="#" class="header__topmenu-link">Пресс-центр</a>
+            <a href="#" class="header__topmenu-link">Контакты</a>
+            <a href="#" class="header__topmenu-link">FAQ <span class="header__faq-icon">?</span></a>
+          </nav>
+        </div>
+      </div>
+      <div class="loc-dropdown" id="locDropdown">
+        <div class="loc-dropdown__inner">
+          <div class="loc-dropdown__col loc-dropdown__col--left">
+            <div class="loc-dropdown__title">Выберите город</div>
+            <div class="loc-dropdown__search">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="citySearch" placeholder="Поиск города">
+            </div>
+            <div class="loc-dropdown__list" id="cityList"></div>
+          </div>
+          <div class="loc-dropdown__col loc-dropdown__col--right">
+            <div class="loc-dropdown__title" id="shopTitle">Выберите магазин</div>
+            <div class="loc-dropdown__search">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" id="shopSearch" placeholder="Поиск по адресу">
+            </div>
+            <div class="loc-dropdown__list" id="shopList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="header__top">
+        <button class="mobile-menu-btn" aria-label="Меню">
+          <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
+        <a href="/" class="header__logo" aria-label="Красное&Белое">
+          <img src="/img/logo.jpg" alt="Красное&Белое">
+        </a>
+        <div class="header__search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="search" placeholder="Найти товар, категорию или бренд">
+        </div>
+        <div class="header__actions">
+          <a href="#" class="header__btn">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Магазин</span>
+          </a>
+          <a href="/cart.html" class="header__btn header__btn--primary">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></svg>
+            <span>Корзина</span>
+            <span class="cart-badge" data-cart-count style="display:none">0</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="nav-wrap">
+        <nav class="nav nav--dark" data-nav>
+          <a href="/catalog.html" class="nav__item">Каталог</a>
+          <a href="#" class="nav__item">Акции</a>
+          <a href="#" class="nav__item">Магазины</a>
+          <a href="/calc.html" class="nav__item">Банкетный калькулятор</a>
+          <a href="/delivery.html" class="nav__item nav__item--active">Доставка</a>
+        </nav>
+        <div class="nav-scrollbar">
+          <div class="nav-scrollbar__thumb"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="breadcrumbs breadcrumbs--dark">
+      <a href="/">Главная</a>
+      <span>/</span>
+      <span>Доставка</span>
+    </div>
+    <h1 class="section__title section__title--dark" style="padding: 16px 0 8px;">Доставка</h1>
+    <p class="delivery-page__intro">
+      «Красное&Белое» не доставляет заказы собственными силами. Мы работаем с проверенными партнёрами — выберите удобный сервис и оформите доставку на его сайте.
+    </p>
+  </div>
+
+  <div class="container">
+    <div class="delivery-partners" id="deliveryPartners">
+      <div class="delivery-partners__empty">Загрузка…</div>
+    </div>
+  </div>
+
+  <footer class="footer footer--dark">
+    <div class="container">
+      <div class="footer__grid">
+        <div>
+          <a href="/" class="footer__logo" aria-label="Красное&Белое">
+            <img src="/img/logo.jpg" alt="Красное&Белое">
+          </a>
+          <p class="footer__text">Сеть магазинов у дома: продукты питания, алкогольные и безалкогольные напитки, промтовары и корма для животных.</p>
+          <p class="footer__legal">ООО «Альфа-М», ОГРН 1147746779025. Товарные знаки «Красное & Белое» принадлежат ООО «Альфа-М».</p>
+        </div>
+        <div>
+          <div class="footer__title">Покупателям</div>
+          <a href="/catalog.html" class="footer__link">Каталог</a>
+          <a href="#" class="footer__link">Акции</a>
+          <a href="/calc.html" class="footer__link">Калькулятор</a>
+          <a href="/delivery.html" class="footer__link">Доставка</a>
+        </div>
+        <div>
+          <div class="footer__title">Компания</div>
+          <a href="#" class="footer__link">О нас</a>
+          <a href="#" class="footer__link">Магазины</a>
+          <a href="#" class="footer__link">Работа у нас</a>
+          <a href="#" class="footer__link">Контакты</a>
+        </div>
+        <div>
+          <div class="footer__title">Контакты</div>
+          <a href="tel:88001000101" class="footer__phone">8 800 100-01-01</a>
+          <a href="mailto:info@krasnoeibeloe.ru" class="footer__contact">
+            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+            info@krasnoeibeloe.ru
+          </a>
+          <a href="mailto:smi@krasnoe-beloe.ru" class="footer__contact">
+            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+            smi@krasnoe-beloe.ru
+          </a>
+          <a href="https://t.me/krasnoeibeloe" class="footer__contact" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M21 4L3 11l5 2 2 6 4-5 6 4z"/></svg>
+            Telegram
+          </a>
+          <a href="https://vk.com/krasnoeibeloe" class="footer__contact" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/></svg>
+            ВКонтакте
+          </a>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <div>© 2026 Красное&Белое. Все права защищены.</div>
+        <div><span class="footer__age">18+</span>Продажа алкоголя запрещена несовершеннолетними</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/script.js"></script>
+  <script src="/js/delivery.js"></script>
+</body>
+</html>

@@ -71,6 +71,10 @@
           <input type="search" placeholder="Найти товар, категорию или бренд">
         </div>
         <div class="header__actions">
+          <a href="#" class="header__btn">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Магазин</span>
+          </a>
           <a href="/cart.html" class="header__btn header__btn--primary">
             <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></svg>
             <span>Корзина</span>
@@ -79,13 +83,18 @@
         </div>
       </div>
 
-      <nav class="nav">
-        <a href="/catalog.html" class="nav__item">Каталог</a>
-        <a href="#" class="nav__item">Акции</a>
-        <a href="#" class="nav__item">Магазины</a>
-        <a href="/calc.html" class="nav__item nav__item--active">Банкетный калькулятор</a>
-        <a href="#" class="nav__item">Доставка</a>
-      </nav>
+      <div class="nav-wrap">
+        <nav class="nav" data-nav>
+          <a href="/catalog.html" class="nav__item">Каталог</a>
+          <a href="#" class="nav__item">Акции</a>
+          <a href="#" class="nav__item">Магазины</a>
+          <a href="/calc.html" class="nav__item nav__item--active">Банкетный калькулятор</a>
+          <a href="/delivery.html" class="nav__item">Доставка</a>
+        </nav>
+        <div class="nav-scrollbar">
+          <div class="nav-scrollbar__thumb"></div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -103,7 +112,6 @@
 
   <div class="container">
     <div class="calc-layout">
-
       <div>
         <div class="calc-card">
           <div class="calc-card__title">Параметры мероприятия</div>
@@ -132,10 +140,10 @@
           <div class="calc-field">
             <label class="calc-field__label">Тип мероприятия</label>
             <select class="calc-field__select" id="calcEventType">
-              <option value="wedding">Свадьба (+20%)</option>
-              <option value="corporate">Корпоратив (+10%)</option>
-              <option value="birthday">День рождения (+5%)</option>
-              <option value="party">Дружеская вечеринка (+5%)</option>
+              <option value="wedding">Свадьба</option>
+              <option value="corporate">Корпоратив</option>
+              <option value="birthday">День рождения</option>
+              <option value="party">Дружеская вечеринка</option>
             </select>
           </div>
 
@@ -187,15 +195,13 @@
           <button type="button" class="calc-result__btn calc-result__btn--primary" id="calcCheckoutBtn">Оформить заказ</button>
         </div>
       </div>
-
     </div>
 
     <div class="calc-suggest-wrap">
       <h2 class="calc-suggest-wrap__title">Подборка товаров</h2>
       <p class="calc-suggest-wrap__desc">
-        Добавляйте товары в корзину — сумма автоматически пересчитается с учётом типа мероприятия и сервисного сбора.
+        Добавляйте товары в корзину — сумма автоматически пересчитается.
       </p>
-
       <div class="calc-suggest" id="calcSuggest"></div>
       <button type="button" class="btn btn--red" id="calcAddAll" style="display:none; margin-top:16px;">
         Добавить всё в корзину
@@ -224,7 +230,7 @@
           <a href="/catalog.html" class="footer__link">Каталог</a>
           <a href="#" class="footer__link">Акции</a>
           <a href="/calc.html" class="footer__link">Калькулятор</a>
-          <a href="#" class="footer__link">Доставка</a>
+          <a href="/delivery.html" class="footer__link">Доставка</a>
         </div>
         <div>
           <div class="footer__title">Компания</div>
@@ -256,7 +262,7 @@
       </div>
       <div class="footer__bottom">
         <div>© 2026 Красное&Белое. Все права защищены.</div>
-        <div><span class="footer__age">18+</span>Продажа алкоголя запрещена несовершеннолетним</div>
+        <div><span class="footer__age">18+</span>Продажа алкоголя запрещена несовершеннолетними</div>
       </div>
     </div>
   </footer>

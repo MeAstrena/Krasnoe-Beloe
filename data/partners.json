@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "name": "Яндекс.Лавка",
+    "description": "описание",
+    "url": "https://github.com/MeAstrena/DoorCraft.git",
+    "logo": "/uploads/partners/partner-1790019707514-290331067.jpg",
+    "deliveryFee": 399,
+    "serviceFee": 39
+  }
+]

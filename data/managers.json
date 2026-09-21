@@ -1,1 +1,37 @@
-[]
+[
+  {
+    "id": 1,
+    "login": "shop-1@kb.ru",
+    "passwordHash": "$2b$12$2eBVBXIjosofaTssbgtr8u3t34BHhCZG3bavpsVi3TiGNEqruz/G.",
+    "shopId": 1,
+    "createdAt": "2026-01-15T10:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "login": "shop-5@kb.ru",
+    "passwordHash": "$2b$12$w6eYUO5oOY9bwKpWRvhxJuPy/gJX9RQeIM2AOOW2jmqg29K1V32JG",
+    "shopId": 5,
+    "createdAt": "2026-09-21T20:38:51.700Z"
+  },
+  {
+    "id": 3,
+    "login": "shop-4@kb.ru",
+    "passwordHash": "$2b$12$7x6zqjXw52xbOIYaG.pJBOjOJUYOyq4KvVpb9d5avhMXY7m77RwQC",
+    "shopId": 4,
+    "createdAt": "2026-09-21T20:59:07.441Z"
+  },
+  {
+    "id": 4,
+    "login": "shop-3@kb.ru",
+    "passwordHash": "$2b$12$Kp.eI6ZLf1luINCAKusDjeMk1JDXAyNLE8vUFoXdp5M9TE4qbfFme",
+    "shopId": 3,
+    "createdAt": "2026-09-21T20:59:12.761Z"
+  },
+  {
+    "id": 5,
+    "login": "shop-2@kb.ru",
+    "passwordHash": "$2b$12$lByR71fjq/uDYztrgNURhewenw5Y6VWm6HcchpjyDzNEpVsbb2Cke",
+    "shopId": 2,
+    "createdAt": "2026-09-21T20:59:14.468Z"
+  }
+]

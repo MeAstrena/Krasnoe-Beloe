@@ -16,7 +16,8 @@
       <a href="/admin/categories">Категории</a>
       <a href="/admin/shops">Магазины</a>
       <a href="/admin/products" class="is-active">Товары</a>
-      <a href="/admin/partners">Доставка</a>
+      <a href="/admin/delivery">Партнеры</a>
+      <a href="/admin/promo">Промокоды</a>
       <a href="/admin/calc-settings">Калькулятор</a>
       <a href="/admin/orders">Заказы</a>
       <a href="/admin/logout" class="admin-nav__logout">Выйти</a>
@@ -30,7 +31,11 @@
       <div class="admin-alert"><%= error %></div>
     <% } %>
 
-    <form class="admin-form--grid admin-form--products" method="POST" action="/admin/products">
+    <p class="admin-hint">
+      Здесь добавляются товары (название, категория, цена, тип, бейдж). Остатки по каждому магазину проставляет менеджер магазина на странице «Мой магазин».
+    </p>
+
+    <form class="admin-form--products" method="POST" action="/admin/products">
       <input type="text" name="name" placeholder="Название товара" required>
 
       <select name="categoryId" required>
@@ -45,33 +50,43 @@
       <div class="admin-type-switch">
         <label class="admin-radio">
           <input type="radio" name="type" value="weight" checked>
-          <span>Весовой (кг)</span>
+          <span>кг</span>
         </label>
         <label class="admin-radio">
           <input type="radio" name="type" value="piece">
-          <span>Штучный (шт)</span>
+          <span>шт</span>
         </label>
       </div>
 
-      <input
-        type="number"
-        name="value"
-        id="newProductValue"
-        placeholder="Количество (кг)"
-        step="0.01"
-        min="0"
-        value="0"
-        required>
-
       <input type="number" name="price" placeholder="Цена, ₽" step="0.01" min="0" required>
-      <input type="number" name="oldPrice" placeholder="Старая цена, ₽" step="0.01" min="0">
       <input type="text" name="weight" placeholder="Фасовка (45 г, 0.5 л)">
 
-      <select name="badge">
+      <select name="badge" class="badge-select">
         <% badgeOptions.forEach(opt => { %>
           <option value="<%= opt.value %>"><%= opt.label %></option>
         <% }) %>
       </select>
+
+      <input
+        type="number"
+        name="discountPercent"
+        class="discount-input"
+        placeholder="Скидка, %"
+        min="0"
+        max="99"
+        step="1"
+        value=""
+        style="display:none">
+
+      <div class="admin-image-upload">
+        <input type="hidden" name="image" id="newProductImage" value="">
+        <input type="file" accept="image/*" class="image-file-input" id="newProductImageFile">
+        <label for="newProductImageFile" class="image-file-label">Картинка</label>
+        <div class="image-preview" id="newProductImagePreview" style="display:none">
+          <img src="" alt="">
+          <button type="button" class="image-clear" onclick="clearNewImage()">✕</button>
+        </div>
+      </div>
 
       <button type="submit">Добавить</button>
     </form>
@@ -85,11 +100,11 @@
       <thead>
         <tr>
           <th>ID</th>
+          <th>Фото</th>
           <th>Название</th>
           <th>Категория</th>
           <th>Бренд</th>
           <th>Тип</th>
-          <th>Кол-во</th>
           <th>Цена</th>
           <th>Бейдж</th>
           <th></th>
@@ -99,16 +114,17 @@
         <% products.forEach(p => { %>
           <tr data-id="<%= p.id %>">
             <td><%= p.id %></td>
+            <td class="row-view">
+              <% if (p.image) { %>
+                <img src="<%= p.image %>" alt="" class="admin-thumb">
+              <% } else { %>
+                <span class="admin-thumb admin-thumb--empty">🛒</span>
+              <% } %>
+            </td>
             <td class="row-view"><span class="cell-name"><%= p.name %></span></td>
             <td class="row-view"><span class="cell-cat"><%= p.categoryName %></span></td>
             <td class="row-view"><span class="cell-brand"><%= p.brand || '—' %></span></td>
             <td class="row-view"><span class="cell-type"><%= p.unit || (p.type === 'piece' ? 'шт' : 'кг') %></span></td>
-            <td class="row-view">
-              <span class="cell-value">
-                <%= p.value !== undefined ? p.value : (p.quantity || 0) %>
-                <%= p.unit || (p.type === 'piece' ? 'шт' : 'кг') %>
-              </span>
-            </td>
             <td class="row-view">
               <span class="cell-price"><%= Number(p.price).toFixed(2) %> ₽</span>
               <% if (p.oldPrice) { %>
@@ -118,13 +134,13 @@
             <td class="row-view"><span class="cell-badge"><%= p.badgeLabel || '—' %></span></td>
             <td class="row-view admin-actions">
               <button type="button" class="admin-btn-edit" onclick="editRow(<%= p.id %>)">Изменить</button>
-              <form method="POST" action="/admin/products/<%= p.id %>/delete" onsubmit="return confirm('Удалить товар <%= p.name %>?')">
+              <form method="POST" action="/admin/products/<%= p.id %>/delete" onsubmit="return confirm('Удалить товар <%= p.name %>? Все его остатки в магазинах тоже удалятся.')">
                 <button type="submit" class="admin-btn-delete">Удалить</button>
               </form>
             </td>
 
             <td class="row-edit" colspan="9">
-              <form method="POST" action="/admin/products/<%= p.id %>/edit" class="admin-edit-form admin-edit-form--grid">
+              <form method="POST" action="/admin/products/<%= p.id %>/edit" class="admin-edit-form--products">
                 <input type="text" name="name" value="<%= p.name %>" required>
 
                 <select name="categoryId" required>
@@ -146,24 +162,35 @@
                   </label>
                 </div>
 
-                <input
-                  type="number"
-                  name="value"
-                  class="edit-value"
-                  value="<%= p.value !== undefined ? p.value : (p.quantity || 0) %>"
-                  step="0.01"
-                  min="0"
-                  required>
-
-                <input type="number" name="price" value="<%= p.price %>" step="0.01" min="0" required>
-                <input type="number" name="oldPrice" value="<%= p.oldPrice || '' %>" step="0.01" min="0" placeholder="Старая цена">
+                <input type="number" name="price" value="<%= p.oldPrice || p.price %>" step="0.01" min="0" required>
                 <input type="text" name="weight" value="<%= p.weight || '' %>" placeholder="Фасовка">
 
-                <select name="badge">
+                <select name="badge" class="badge-select">
                   <% badgeOptions.forEach(opt => { %>
                     <option value="<%= opt.value %>" <%= (p.badge || '') === opt.value ? 'selected' : '' %>><%= opt.label %></option>
                   <% }) %>
                 </select>
+
+                <input
+                  type="number"
+                  name="discountPercent"
+                  class="discount-input"
+                  placeholder="Скидка, %"
+                  min="0"
+                  max="99"
+                  step="1"
+                  value="<%= p.discountPercent || '' %>"
+                  style="display:<%= p.badge === 'discount' ? 'inline-block' : 'none' %>">
+
+                <div class="admin-image-upload admin-image-upload--edit">
+                  <input type="hidden" name="image" class="edit-image-input" value="<%= p.image || '' %>">
+                  <input type="file" accept="image/*" class="image-file-input edit-image-file" id="editImageFile<%= p.id %>">
+                  <label for="editImageFile<%= p.id %>" class="image-file-label">Картинка</label>
+                  <div class="image-preview" data-preview style="<%= p.image ? '' : 'display:none' %>">
+                    <img src="<%= p.image || '' %>" alt="">
+                    <button type="button" class="image-clear edit-image-clear">✕</button>
+                  </div>
+                </div>
 
                 <button type="submit" class="admin-btn-save">Сохранить</button>
                 <button type="button" class="admin-btn-cancel" onclick="cancelEdit(<%= p.id %>)">Отмена</button>

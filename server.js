@@ -1,8 +1,10 @@
 import express from 'express';
 import session from 'express-session';
 import bcrypt from 'bcryptjs';
+import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
@@ -14,9 +16,19 @@ const PORT = process.env.PORT || 3000;
 
 const DATA_DIR = path.join(__dirname, 'data');
 const PUBLIC_DIR = path.join(__dirname, 'public');
+const PRODUCTS_UPLOAD_DIR = path.join(PUBLIC_DIR, 'uploads', 'products');
+const PARTNERS_UPLOAD_DIR = path.join(PUBLIC_DIR, 'uploads', 'partners');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+if (!fs.existsSync(PRODUCTS_UPLOAD_DIR)) {
+  fs.mkdirSync(PRODUCTS_UPLOAD_DIR, { recursive: true });
+}
+
+if (!fs.existsSync(PARTNERS_UPLOAD_DIR)) {
+  fs.mkdirSync(PARTNERS_UPLOAD_DIR, { recursive: true });
 }
 
 function ensureFile(file, defaultData = []) {
@@ -33,6 +45,7 @@ ensureFile('products.json', []);
 ensureFile('orders.json', []);
 ensureFile('regions.json', []);
 ensureFile('partners.json', []);
+ensureFile('promo.json', []);
 ensureFile('stocks.json', []);
 ensureFile('managers.json', []);
 ensureFile('settings.json', {
@@ -49,6 +62,43 @@ ensureFile('settings.json', {
       party: 5
     }
   }
+});
+
+function makeStorage(dir, prefix) {
+  return multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      const name = prefix + '-' + Date.now() + '-' + Math.round(Math.random() * 1e9) + ext;
+      cb(null, name);
+    }
+  });
+}
+
+function makeFileFilter() {
+  return (req, file, cb) => {
+    const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Только jpg, png, webp, gif'));
+    }
+  };
+}
+
+const uploadProduct = multer({
+  storage: makeStorage(PRODUCTS_UPLOAD_DIR, 'product'),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: makeFileFilter()
+});
+
+const uploadPartner = multer({
+  storage: makeStorage(PARTNERS_UPLOAD_DIR, 'partner'),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: makeFileFilter()
 });
 
 app.set('view engine', 'ejs');
@@ -104,31 +154,104 @@ function sortByName(items, field = 'name') {
   );
 }
 
-const BADGE_LABELS = {
-  'hit': 'ХИТ',
-  'discount': '-20%',
-  'new': 'НОВИНКА',
-  'sale': 'SALE',
-  '1+1': '1+1',
-  '': ''
-};
-
-function badgeLabel(code) {
-  return BADGE_LABELS[code] || '';
+function badgeLabel(code, discountPercent) {
+  if (code === 'discount') {
+    const p = Number(discountPercent) || 0;
+    return p > 0 ? '-' + p + '%' : 'СКИДКА';
+  }
+  const map = {
+    'hit': 'ХИТ',
+    'new': 'НОВИНКА',
+    'sale': 'SALE',
+    '1+1': '1+1',
+    '': ''
+  };
+  return map[code] || '';
 }
 
-function normalizeValue(type, value) {
-  let num = Number(value) || 0;
-  if (type === 'piece') {
-    num = Math.max(0, Math.round(num));
-  } else {
-    num = Math.max(0, num);
+function parseDateDDMMYYYY(str) {
+  if (!str) return null;
+  const parts = String(str).split('.');
+  if (parts.length !== 3) return null;
+  const day = Number(parts[0]);
+  const month = Number(parts[1]);
+  const year = Number(parts[2]);
+  if (!day || !month || !year) return null;
+  const d = new Date(year, month - 1, day);
+  if (isNaN(d.getTime())) return null;
+  return d;
+}
+
+function dateToInputValue(str) {
+  if (!str) return '';
+  const d = parseDateDDMMYYYY(str);
+  if (!d) return '';
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return yyyy + '-' + mm + '-' + dd;
+}
+
+function inputValueToDate(str) {
+  if (!str) return '';
+  const parts = String(str).split('-');
+  if (parts.length !== 3) return '';
+  return parts[2] + '.' + parts[1] + '.' + parts[0];
+}
+
+function generatePassword(length = 12) {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let pwd = '';
+  for (let i = 0; i < length; i++) {
+    const idx = crypto.randomInt(0, chars.length);
+    pwd += chars[idx];
   }
-  return num;
+  return pwd;
+}
+
+function getStockValue(stocks, shopId, productId) {
+  const record = stocks.find(s =>
+    Number(s.shopId) === Number(shopId) && Number(s.productId) === Number(productId)
+  );
+  if (!record) return 0;
+  return Number(record.value) || 0;
+}
+
+function setStockValue(stocks, shopId, productId, value) {
+  const idx = stocks.findIndex(s =>
+    Number(s.shopId) === Number(shopId) && Number(s.productId) === Number(productId)
+  );
+  const num = Number(value) || 0;
+  if (idx === -1) {
+    stocks.push({ shopId: Number(shopId), productId: Number(productId), value: num });
+  } else {
+    stocks[idx].value = num;
+  }
+  return stocks;
+}
+
+function getStocksForShop(stocks, shopId) {
+  const result = {};
+  stocks.forEach(s => {
+    if (Number(s.shopId) === Number(shopId)) {
+      result[Number(s.productId)] = Number(s.value) || 0;
+    }
+  });
+  return result;
 }
 
 function requireAuth(req, res, next) {
+  if (req.session && (req.session.isAdmin || req.session.isManager)) return next();
+  return res.redirect('/admin/login');
+}
+
+function requireOwner(req, res, next) {
   if (req.session && req.session.isAdmin) return next();
+  return res.redirect('/admin/login');
+}
+
+function requireManager(req, res, next) {
+  if (req.session && req.session.isManager && req.session.shopId) return next();
   return res.redirect('/admin/login');
 }
 
@@ -136,6 +259,8 @@ function requireAuthApi(req, res, next) {
   if (req.session && req.session.isAdmin) return next();
   return res.status(401).json({ error: 'Не авторизован' });
 }
+
+/* ---------- ПУБЛИЧНЫЕ РОУТЫ ---------- */
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
@@ -161,30 +286,127 @@ app.get('/delivery.html', (req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'delivery.html'));
 });
 
+app.get('/delivery-order.html', (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'delivery-order.html'));
+});
+
 app.get('/api/data', (req, res) => {
   const settings = readData('settings.json') || { calc: {} };
   const products = readData('products.json') || [];
+  const stocks = readData('stocks.json') || [];
+  const shops = readData('shops.json') || [];
+
   const productsWithBadge = products.map(p => ({
     ...p,
-    badgeLabel: badgeLabel(p.badge)
+    badgeLabel: badgeLabel(p.badge, p.discountPercent)
   }));
+
+  const stocksByShop = {};
+  shops.forEach(shop => {
+    stocksByShop[shop.id] = getStocksForShop(stocks, shop.id);
+  });
 
   res.json({
     cities: sortByName(readData('cities.json') || []),
     categories: sortByName(readData('categories.json') || []),
-    shops: readData('shops.json') || [],
+    shops: shops,
     products: productsWithBadge,
+    stocksByShop: stocksByShop,
     regions: sortByName(readData('regions.json') || []),
     partners: readData('partners.json') || [],
     settings: settings
   });
 });
 
+app.post('/api/promo/check', (req, res) => {
+  const { code, items, subtotal } = req.body;
+
+  if (!code || !code.trim()) {
+    return res.status(400).json({ ok: false, message: 'Введите промокод' });
+  }
+
+  if (!Array.isArray(items) || !items.length) {
+    return res.status(400).json({ ok: false, message: 'Корзина пуста' });
+  }
+
+  const products = readData('products.json') || [];
+  const categories = readData('categories.json') || [];
+  const sub = Number(subtotal) || 0;
+
+  const result = checkPromoCode(code, items, sub, products, categories);
+
+  if (!result.ok) {
+    return res.status(400).json(result);
+  }
+
+  res.json(result);
+});
+
 app.post('/api/orders', (req, res) => {
-  const { items, subtotal, serviceFee, total, guests, hours, eventType, noAlcohol, budget, shopId } = req.body;
+  const { items, subtotal, serviceFee, deliveryFee, promoCode, promoDiscount, deliveryPartnerId, total, guests, hours, eventType, noAlcohol, budget, shopId } = req.body;
 
   if (!Array.isArray(items) || !items.length) {
     return res.status(400).json({ error: 'Корзина пуста' });
+  }
+
+  if (!shopId) {
+    return res.status(400).json({ error: 'Магазин не выбран' });
+  }
+
+  const products = readData('products.json') || [];
+  const stocks = readData('stocks.json') || [];
+  const errors = [];
+
+  items.forEach(item => {
+    const product = products.find(p => Number(p.id) === Number(item.id));
+    if (!product) {
+      errors.push('Товар не найден: ' + item.name);
+      return;
+    }
+    const available = getStockValue(stocks, shopId, product.id);
+    const requested = Number(item.qty) || 0;
+    if (requested > available) {
+      errors.push('Недостаточно «' + product.name + '»: в наличии ' + available + ' ' + (product.unit || ''));
+    }
+  });
+
+  if (errors.length) {
+    return res.status(400).json({ error: errors.join('; ') });
+  }
+
+  let finalPromoDiscount = 0;
+  let finalPromoCode = '';
+  let finalPromoId = null;
+
+  if (promoCode && promoCode.trim()) {
+    const categories = readData('categories.json') || [];
+    const result = checkPromoCode(promoCode, items, Number(subtotal) || 0, products, categories);
+    if (!result.ok) {
+      return res.status(400).json({ error: result.message });
+    }
+    finalPromoDiscount = result.discount;
+    finalPromoCode = result.code;
+    finalPromoId = result.promoId;
+  }
+
+  items.forEach(item => {
+    const product = products.find(p => Number(p.id) === Number(item.id));
+    if (!product) return;
+    const requested = Number(item.qty) || 0;
+    const current = getStockValue(stocks, shopId, product.id);
+    setStockValue(stocks, shopId, product.id, Math.max(0, current - requested));
+  });
+
+  writeData('stocks.json', stocks);
+
+  if (finalPromoId) {
+    const promos = readData('promo.json') || [];
+    const updatedPromos = promos.map(p =>
+      Number(p.id) === Number(finalPromoId)
+        ? { ...p, usedCount: (Number(p.usedCount) || 0) + 1 }
+        : p
+    );
+    writeData('promo.json', updatedPromos);
   }
 
   const orders = readData('orders.json') || [];
@@ -194,10 +416,15 @@ app.post('/api/orders', (req, res) => {
       id: i.id,
       name: i.name,
       price: Number(i.price) || 0,
-      qty: Number(i.qty) || 1
+      qty: Number(i.qty) || 1,
+      unit: i.unit || ''
     })),
     subtotal: Number(subtotal) || 0,
     serviceFee: Number(serviceFee) || 0,
+    deliveryFee: Number(deliveryFee) || 0,
+    promoCode: finalPromoCode,
+    promoDiscount: finalPromoDiscount,
+    deliveryPartnerId: Number(deliveryPartnerId) || null,
     total: Number(total) || 0,
     guests: Number(guests) || 0,
     hours: Number(hours) || 0,
@@ -214,24 +441,20 @@ app.post('/api/orders', (req, res) => {
   res.json({ ok: true, orderId: order.id });
 });
 
+/* ---------- АВТОРИЗАЦИЯ ---------- */
+
 app.get('/admin/login', (req, res) => {
   if (req.session && req.session.isAdmin) {
     return res.redirect('/admin');
+  }
+  if (req.session && req.session.isManager) {
+    return res.redirect('/admin/my-shop');
   }
   res.render('admin-login', { error: null, login: '' });
 });
 
 app.post('/admin/login', async (req, res) => {
   const { login, password } = req.body;
-  const ownerLogin = process.env.OWNER_LOGIN;
-  const ownerHash = process.env.OWNER_PASSWORD_HASH;
-
-  if (!ownerLogin || !ownerHash) {
-    return res.render('admin-login', {
-      error: 'Владелец не настроен на сервере',
-      login: login || ''
-    });
-  }
 
   if (!login || !password) {
     return res.render('admin-login', {
@@ -240,34 +463,56 @@ app.post('/admin/login', async (req, res) => {
     });
   }
 
-  const loginMatch = login.trim().toLowerCase() === ownerLogin.trim().toLowerCase();
+  const loginTrim = login.trim();
 
-  if (!loginMatch) {
-    return res.render('admin-login', {
-      error: 'Неверный логин или пароль',
-      login: login
-    });
-  }
+  const ownerLogin = process.env.OWNER_LOGIN;
+  const ownerHash = process.env.OWNER_PASSWORD_HASH;
 
-  try {
-    const ok = await bcrypt.compare(password, ownerHash);
-    if (!ok) {
-      return res.render('admin-login', {
-        error: 'Неверный логин или пароль',
-        login: login
-      });
+  if (ownerLogin && ownerHash && loginTrim.toLowerCase() === ownerLogin.trim().toLowerCase()) {
+    try {
+      const ok = await bcrypt.compare(password, ownerHash);
+      if (!ok) {
+        return res.render('admin-login', {
+          error: 'Неверный логин или пароль',
+          login: loginTrim
+        });
+      }
+      req.session.isAdmin = true;
+      req.session.role = 'owner';
+      req.session.userLogin = ownerLogin;
+      return res.redirect('/admin');
+    } catch (err) {
+      console.error('Ошибка проверки пароля владельца:', err.message);
     }
-    req.session.isAdmin = true;
-    req.session.role = 'owner';
-    req.session.userLogin = ownerLogin;
-    return res.redirect('/admin');
-  } catch (err) {
-    console.error('Ошибка проверки пароля:', err.message);
-    return res.render('admin-login', {
-      error: 'Ошибка сервера',
-      login: login || ''
-    });
   }
+
+  const managers = readData('managers.json') || [];
+  const manager = managers.find(m => String(m.login).toLowerCase() === loginTrim.toLowerCase());
+
+  if (manager) {
+    try {
+      const ok = await bcrypt.compare(password, manager.passwordHash);
+      if (!ok) {
+        return res.render('admin-login', {
+          error: 'Неверный логин или пароль',
+          login: loginTrim
+        });
+      }
+      req.session.isManager = true;
+      req.session.role = 'manager';
+      req.session.managerId = manager.id;
+      req.session.shopId = manager.shopId;
+      req.session.userLogin = manager.login;
+      return res.redirect('/admin/my-shop');
+    } catch (err) {
+      console.error('Ошибка проверки пароля менеджера:', err.message);
+    }
+  }
+
+  return res.render('admin-login', {
+    error: 'Неверный логин или пароль',
+    login: loginTrim
+  });
 });
 
 app.get('/admin/logout', (req, res) => {
@@ -277,7 +522,88 @@ app.get('/admin/logout', (req, res) => {
   });
 });
 
-app.get('/admin', requireAuth, (req, res) => {
+/* ---------- СТРАНИЦА МЕНЕДЖЕРА ---------- */
+
+app.get('/admin/my-shop', requireManager, (req, res) => {
+  const shopId = req.session.shopId;
+  const shops = readData('shops.json') || [];
+  const cities = readData('cities.json') || [];
+  const shop = shops.find(s => Number(s.id) === Number(shopId));
+
+  if (!shop) {
+    req.session.destroy(() => res.redirect('/admin/login'));
+    return;
+  }
+
+  const city = cities.find(c => Number(c.id) === Number(shop.cityId));
+  const shopName = (city ? city.name + ', ' : '') + shop.address;
+
+  res.render('admin-my-shop', {
+    shop: shop,
+    shopName: shopName,
+    login: req.session.userLogin || ''
+  });
+});
+
+app.get('/api/manager/products', requireManager, (req, res) => {
+  const shopId = req.session.shopId;
+  const products = readData('products.json') || [];
+  const stocks = readData('stocks.json') || [];
+  const categories = readData('categories.json') || [];
+
+  const productsView = products.map(p => {
+    const cat = categories.find(c => Number(c.id) === Number(p.categoryId));
+    return {
+      id: p.id,
+      name: p.name,
+      categoryName: cat ? cat.name : '—',
+      brand: p.brand || '',
+      price: p.price,
+      unit: p.unit || 'шт',
+      type: p.type || 'piece',
+      image: p.image || '',
+      badge: p.badge || '',
+      badgeLabel: badgeLabel(p.badge, p.discountPercent),
+      stock: getStockValue(stocks, shopId, p.id)
+    };
+  });
+
+  productsView.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+
+  res.json({ products: productsView, shopId: shopId });
+});
+
+app.post('/api/manager/stock', requireManager, (req, res) => {
+  const shopId = req.session.shopId;
+  const { productId, value } = req.body;
+
+  if (!productId) {
+    return res.status(400).json({ error: 'Не указан товар' });
+  }
+
+  const products = readData('products.json') || [];
+  const product = products.find(p => Number(p.id) === Number(productId));
+  if (!product) {
+    return res.status(404).json({ error: 'Товар не найден' });
+  }
+
+  let numValue = Number(value) || 0;
+  if (product.type === 'piece') {
+    numValue = Math.max(0, Math.round(numValue));
+  } else {
+    numValue = Math.max(0, numValue);
+  }
+
+  const stocks = readData('stocks.json') || [];
+  setStockValue(stocks, shopId, productId, numValue);
+  writeData('stocks.json', stocks);
+
+  res.json({ ok: true, value: numValue });
+});
+
+/* ---------- ВЛАДЕЛЕЦ ---------- */
+
+app.get('/admin', requireOwner, (req, res) => {
   const orders = readData('orders.json') || [];
   res.render('admin-dashboard', {
     cities: (readData('cities.json') || []).length,
@@ -286,20 +612,21 @@ app.get('/admin', requireAuth, (req, res) => {
     products: (readData('products.json') || []).length,
     regions: (readData('regions.json') || []).length,
     partners: (readData('partners.json') || []).length,
+    promos: (readData('promo.json') || []).length,
     orders: orders.length
   });
 });
 
 /* ---------- РЕГИОНЫ ---------- */
 
-app.get('/admin/regions', requireAuth, (req, res) => {
+app.get('/admin/regions', requireOwner, (req, res) => {
   res.render('admin-regions', {
     regions: sortByName(readData('regions.json') || []),
     error: req.query.error || null
   });
 });
 
-app.post('/admin/regions', requireAuth, (req, res) => {
+app.post('/admin/regions', requireOwner, (req, res) => {
   const { name, markup } = req.body;
   if (!name || !name.trim()) return res.redirect('/admin/regions');
 
@@ -321,7 +648,7 @@ app.post('/admin/regions', requireAuth, (req, res) => {
   res.redirect('/admin/regions');
 });
 
-app.post('/admin/regions/:id/edit', requireAuth, (req, res) => {
+app.post('/admin/regions/:id/edit', requireOwner, (req, res) => {
   const id = Number(req.params.id);
   const { name, markup } = req.body;
   if (!name || !name.trim()) return res.redirect('/admin/regions');
@@ -342,7 +669,7 @@ app.post('/admin/regions/:id/edit', requireAuth, (req, res) => {
   res.redirect('/admin/regions');
 });
 
-app.post('/admin/regions/:id/delete', requireAuth, (req, res) => {
+app.post('/admin/regions/:id/delete', requireOwner, (req, res) => {
   const id = Number(req.params.id);
   writeData('regions.json', (readData('regions.json') || []).filter(r => r.id !== id));
 
@@ -355,38 +682,54 @@ app.post('/admin/regions/:id/delete', requireAuth, (req, res) => {
   res.redirect('/admin/regions');
 });
 
-/* ---------- ПАРТНЁРЫ ДОСТАВКИ ---------- */
+/* ---------- ДОСТАВКА ---------- */
 
-app.get('/admin/partners', requireAuth, (req, res) => {
-  res.render('admin-partners', {
+app.get('/admin/delivery', requireOwner, (req, res) => {
+  res.render('admin-delivery', {
     partners: readData('partners.json') || [],
     error: req.query.error || null
   });
 });
 
-app.post('/admin/partners', requireAuth, (req, res) => {
-  const { name, description, url, logo } = req.body;
-  if (!name || !name.trim()) return res.redirect('/admin/partners');
+app.post('/admin/delivery', requireOwner, (req, res) => {
+  const { name, description, url, logo, deliveryFee, serviceFee } = req.body;
+  if (!name || !name.trim()) return res.redirect('/admin/delivery');
 
   const partners = readData('partners.json') || [];
+  const normalized = name.trim().toLowerCase();
+  const exists = partners.some(p => p.name.toLowerCase() === normalized);
+
+  if (exists) {
+    return res.redirect('/admin/delivery?error=' + encodeURIComponent('Партнёр «' + name.trim() + '» уже есть'));
+  }
+
   partners.push({
     id: nextId(partners),
     name: name.trim(),
     description: (description && description.trim()) || '',
     url: (url && url.trim()) || '',
-    logo: (logo && logo.trim()) || ''
+    logo: (logo && logo.trim()) || '',
+    deliveryFee: Number(deliveryFee) || 0,
+    serviceFee: Number(serviceFee) || 0
   });
 
   writeData('partners.json', partners);
-  res.redirect('/admin/partners');
+  res.redirect('/admin/delivery');
 });
 
-app.post('/admin/partners/:id/edit', requireAuth, (req, res) => {
+app.post('/admin/delivery/:id/edit', requireOwner, (req, res) => {
   const id = Number(req.params.id);
-  const { name, description, url, logo } = req.body;
-  if (!name || !name.trim()) return res.redirect('/admin/partners');
+  const { name, description, url, logo, deliveryFee, serviceFee } = req.body;
+  if (!name || !name.trim()) return res.redirect('/admin/delivery');
 
   const partners = readData('partners.json') || [];
+  const normalized = name.trim().toLowerCase();
+  const duplicate = partners.some(p => p.id !== id && p.name.toLowerCase() === normalized);
+
+  if (duplicate) {
+    return res.redirect('/admin/delivery?error=' + encodeURIComponent('Партнёр «' + name.trim() + '» уже есть'));
+  }
+
   const updated = partners.map(p =>
     p.id === id
       ? {
@@ -394,24 +737,186 @@ app.post('/admin/partners/:id/edit', requireAuth, (req, res) => {
           name: name.trim(),
           description: (description && description.trim()) || '',
           url: (url && url.trim()) || '',
-          logo: (logo && logo.trim()) || ''
+          logo: (logo && logo.trim()) || p.logo || '',
+          deliveryFee: Number(deliveryFee) || 0,
+          serviceFee: Number(serviceFee) || 0
         }
       : p
   );
 
   writeData('partners.json', updated);
-  res.redirect('/admin/partners');
+  res.redirect('/admin/delivery');
 });
 
-app.post('/admin/partners/:id/delete', requireAuth, (req, res) => {
+app.post('/admin/delivery/:id/delete', requireOwner, (req, res) => {
   const id = Number(req.params.id);
   writeData('partners.json', (readData('partners.json') || []).filter(p => p.id !== id));
-  res.redirect('/admin/partners');
+  res.redirect('/admin/delivery');
+});
+
+/* ---------- ПРОМОКОДЫ ---------- */
+
+app.get('/admin/promo', requireOwner, (req, res) => {
+  const promos = readData('promo.json') || [];
+  const categories = sortByName(readData('categories.json') || []);
+  const products = readData('products.json') || [];
+
+  const promosView = promos.map(p => ({
+    ...p,
+    validFromInput: dateToInputValue(p.validFrom),
+    validUntilInput: dateToInputValue(p.validUntil)
+  }));
+
+  res.render('admin-promo', {
+    promos: promosView,
+    categories,
+    products,
+    error: req.query.error || null
+  });
+});
+
+app.post('/admin/promo', requireOwner, (req, res) => {
+  const {
+    code, type, value, minSubtotal,
+    validFromInput, validUntilInput,
+    usageLimit, active,
+    categoryIds, productIds, brandNames
+  } = req.body;
+
+  if (!code || !code.trim()) {
+    return res.redirect('/admin/promo?error=' + encodeURIComponent('Введите код промокода'));
+  }
+
+  if (type !== 'percent' && type !== 'fixed') {
+    return res.redirect('/admin/promo?error=' + encodeURIComponent('Неверный тип скидки'));
+  }
+
+  if (!value || isNaN(Number(value)) || Number(value) <= 0) {
+    return res.redirect('/admin/promo?error=' + encodeURIComponent('Введите значение скидки'));
+  }
+
+  const promos = readData('promo.json') || [];
+  const normalized = code.trim().toLowerCase();
+  const exists = promos.some(p => String(p.code).toLowerCase() === normalized);
+
+  if (exists) {
+    return res.redirect('/admin/promo?error=' + encodeURIComponent('Промокод «' + code.trim() + '» уже есть'));
+  }
+
+  const parseArray = (v) => {
+    if (!v) return [];
+    if (Array.isArray(v)) return v.map(x => Number(x) || String(x));
+    return [v].map(x => Number(x) || String(x));
+  };
+
+  const catIds = parseArray(categoryIds).map(Number).filter(n => !isNaN(n));
+  const prodIds = parseArray(productIds).map(Number).filter(n => !isNaN(n));
+  const brands = parseArray(brandNames).map(String).filter(s => s && s.trim()).map(s => s.trim());
+
+  promos.push({
+    id: nextId(promos),
+    code: code.trim(),
+    type: type,
+    value: Number(value),
+    appliesTo: 'products',
+    categoryIds: catIds,
+    productIds: prodIds,
+    brandNames: brands,
+    minSubtotal: Number(minSubtotal) || 0,
+    validFrom: inputValueToDate(validFromInput),
+    validUntil: inputValueToDate(validUntilInput),
+    usageLimit: Number(usageLimit) || 0,
+    usedCount: 0,
+    active: active === 'on' || active === 'true' || active === true,
+    createdAt: new Date().toISOString()
+  });
+
+  writeData('promo.json', promos);
+  res.redirect('/admin/promo');
+});
+
+app.post('/admin/promo/:id/edit', requireOwner, (req, res) => {
+  const id = Number(req.params.id);
+  const {
+    code, type, value, minSubtotal,
+    validFromInput, validUntilInput,
+    usageLimit, active,
+    categoryIds, productIds, brandNames
+  } = req.body;
+
+  if (!code || !code.trim()) {
+    return res.redirect('/admin/promo?error=' + encodeURIComponent('Введите код промокода'));
+  }
+
+  if (type !== 'percent' && type !== 'fixed') {
+    return res.redirect('/admin/promo?error=' + encodeURIComponent('Неверный тип скидки'));
+  }
+
+  if (!value || isNaN(Number(value)) || Number(value) <= 0) {
+    return res.redirect('/admin/promo?error=' + encodeURIComponent('Введите значение скидки'));
+  }
+
+  const promos = readData('promo.json') || [];
+  const normalized = code.trim().toLowerCase();
+  const duplicate = promos.some(p => p.id !== id && String(p.code).toLowerCase() === normalized);
+
+  if (duplicate) {
+    return res.redirect('/admin/promo?error=' + encodeURIComponent('Промокод «' + code.trim() + '» уже есть'));
+  }
+
+  const parseArray = (v) => {
+    if (!v) return [];
+    if (Array.isArray(v)) return v.map(x => Number(x) || String(x));
+    return [v].map(x => Number(x) || String(x));
+  };
+
+  const catIds = parseArray(categoryIds).map(Number).filter(n => !isNaN(n));
+  const prodIds = parseArray(productIds).map(Number).filter(n => !isNaN(n));
+  const brands = parseArray(brandNames).map(String).filter(s => s && s.trim()).map(s => s.trim());
+
+  const updated = promos.map(p =>
+    p.id === id
+      ? {
+          ...p,
+          code: code.trim(),
+          type: type,
+          value: Number(value),
+          appliesTo: 'products',
+          categoryIds: catIds,
+          productIds: prodIds,
+          brandNames: brands,
+          minSubtotal: Number(minSubtotal) || 0,
+          validFrom: inputValueToDate(validFromInput),
+          validUntil: inputValueToDate(validUntilInput),
+          usageLimit: Number(usageLimit) || 0,
+          active: active === 'on' || active === 'true' || active === true
+        }
+      : p
+  );
+
+  writeData('promo.json', updated);
+  res.redirect('/admin/promo');
+});
+
+app.post('/admin/promo/:id/delete', requireOwner, (req, res) => {
+  const id = Number(req.params.id);
+  writeData('promo.json', (readData('promo.json') || []).filter(p => p.id !== id));
+  res.redirect('/admin/promo');
+});
+
+app.post('/admin/promo/:id/toggle', requireOwner, (req, res) => {
+  const id = Number(req.params.id);
+  const promos = readData('promo.json') || [];
+  const updated = promos.map(p =>
+    p.id === id ? { ...p, active: !p.active } : p
+  );
+  writeData('promo.json', updated);
+  res.redirect('/admin/promo');
 });
 
 /* ---------- ГОРОДА ---------- */
 
-app.get('/admin/cities', requireAuth, (req, res) => {
+app.get('/admin/cities', requireOwner, (req, res) => {
   const cities = sortByName(readData('cities.json') || []);
   const regions = sortByName(readData('regions.json') || []);
 
@@ -427,7 +932,7 @@ app.get('/admin/cities', requireAuth, (req, res) => {
   });
 });
 
-app.post('/admin/cities', requireAuth, (req, res) => {
+app.post('/admin/cities', requireOwner, (req, res) => {
   const { name, shopsCount, regionId } = req.body;
   if (!name || !name.trim()) return res.redirect('/admin/cities');
 
@@ -451,7 +956,7 @@ app.post('/admin/cities', requireAuth, (req, res) => {
   res.redirect('/admin/cities');
 });
 
-app.post('/admin/cities/:id/edit', requireAuth, (req, res) => {
+app.post('/admin/cities/:id/edit', requireOwner, (req, res) => {
   const id = Number(req.params.id);
   const { name, shopsCount, regionId } = req.body;
   if (!name || !name.trim()) return res.redirect('/admin/cities');
@@ -479,23 +984,33 @@ app.post('/admin/cities/:id/edit', requireAuth, (req, res) => {
   res.redirect('/admin/cities');
 });
 
-app.post('/admin/cities/:id/delete', requireAuth, (req, res) => {
+app.post('/admin/cities/:id/delete', requireOwner, (req, res) => {
   const id = Number(req.params.id);
   writeData('cities.json', (readData('cities.json') || []).filter(c => c.id !== id));
-  writeData('shops.json', (readData('shops.json') || []).filter(s => Number(s.cityId) !== id));
+
+  const shops = readData('shops.json') || [];
+  const shopsToDelete = shops.filter(s => Number(s.cityId) === id).map(s => Number(s.id));
+  writeData('shops.json', shops.filter(s => Number(s.cityId) !== id));
+
+  const stocks = readData('stocks.json') || [];
+  writeData('stocks.json', stocks.filter(s => !shopsToDelete.includes(Number(s.shopId))));
+
+  const managers = readData('managers.json') || [];
+  writeData('managers.json', managers.filter(m => !shopsToDelete.includes(Number(m.shopId))));
+
   res.redirect('/admin/cities');
 });
 
 /* ---------- КАТЕГОРИИ ---------- */
 
-app.get('/admin/categories', requireAuth, (req, res) => {
+app.get('/admin/categories', requireOwner, (req, res) => {
   res.render('admin-categories', {
     categories: sortByName(readData('categories.json') || []),
     error: req.query.error || null
   });
 });
 
-app.post('/admin/categories', requireAuth, (req, res) => {
+app.post('/admin/categories', requireOwner, (req, res) => {
   const { name, slug, count } = req.body;
   if (!name || !name.trim()) return res.redirect('/admin/categories');
 
@@ -522,7 +1037,7 @@ app.post('/admin/categories', requireAuth, (req, res) => {
   res.redirect('/admin/categories');
 });
 
-app.post('/admin/categories/:id/edit', requireAuth, (req, res) => {
+app.post('/admin/categories/:id/edit', requireOwner, (req, res) => {
   const id = Number(req.params.id);
   const { name, slug, count } = req.body;
   if (!name || !name.trim()) return res.redirect('/admin/categories');
@@ -550,7 +1065,7 @@ app.post('/admin/categories/:id/edit', requireAuth, (req, res) => {
   res.redirect('/admin/categories');
 });
 
-app.post('/admin/categories/:id/delete', requireAuth, (req, res) => {
+app.post('/admin/categories/:id/delete', requireOwner, (req, res) => {
   const id = Number(req.params.id);
   writeData('categories.json', (readData('categories.json') || []).filter(c => c.id !== id));
   res.redirect('/admin/categories');
@@ -558,13 +1073,19 @@ app.post('/admin/categories/:id/delete', requireAuth, (req, res) => {
 
 /* ---------- МАГАЗИНЫ ---------- */
 
-app.get('/admin/shops', requireAuth, (req, res) => {
+app.get('/admin/shops', requireOwner, (req, res) => {
   const shops = readData('shops.json') || [];
   const cities = sortByName(readData('cities.json') || []);
+  const managers = readData('managers.json') || [];
 
   const shopsWithCity = shops.map(s => {
     const city = cities.find(c => Number(c.id) === Number(s.cityId));
-    return { ...s, cityName: city ? city.name : '—' };
+    const manager = managers.find(m => Number(m.shopId) === Number(s.id));
+    return {
+      ...s,
+      cityName: city ? city.name : '—',
+      managerLogin: manager ? manager.login : '—'
+    };
   });
 
   shopsWithCity.sort((a, b) => {
@@ -573,10 +1094,17 @@ app.get('/admin/shops', requireAuth, (req, res) => {
     return a.address.localeCompare(b.address, 'ru');
   });
 
-  res.render('admin-shops', { cities, shops: shopsWithCity, error: req.query.error || null });
+  res.render('admin-shops', {
+    cities,
+    shops: shopsWithCity,
+    error: req.query.error || null,
+    newPassword: req.query.newPassword || null,
+    newLogin: req.query.newLogin || null,
+    shopId: req.query.shopId || null
+  });
 });
 
-app.post('/admin/shops', requireAuth, (req, res) => {
+app.post('/admin/shops', requireOwner, async (req, res) => {
   const { cityId, address, metro, hoursFrom, hoursTo } = req.body;
 
   if (!cityId || !address || !address.trim()) return res.redirect('/admin/shops');
@@ -592,8 +1120,10 @@ app.post('/admin/shops', requireAuth, (req, res) => {
     return res.redirect('/admin/shops?error=' + encodeURIComponent('Такой магазин уже есть в этом городе'));
   }
 
+  const shopId = nextId(shops);
+
   shops.push({
-    id: nextId(shops),
+    id: shopId,
     cityId: Number(cityId),
     address: address.trim(),
     metro: (metro && metro.trim()) || '',
@@ -601,10 +1131,25 @@ app.post('/admin/shops', requireAuth, (req, res) => {
   });
 
   writeData('shops.json', shops);
-  res.redirect('/admin/shops');
+
+  const plainPassword = generatePassword(12);
+  const passwordHash = await bcrypt.hash(plainPassword, 12);
+  const managerLogin = 'shop-' + shopId + '@kb.ru';
+
+  const managers = readData('managers.json') || [];
+  managers.push({
+    id: nextId(managers),
+    login: managerLogin,
+    passwordHash: passwordHash,
+    shopId: shopId,
+    createdAt: new Date().toISOString()
+  });
+  writeData('managers.json', managers);
+
+  res.redirect('/admin/shops?newLogin=' + encodeURIComponent(managerLogin) + '&newPassword=' + encodeURIComponent(plainPassword) + '&shopId=' + shopId);
 });
 
-app.post('/admin/shops/:id/edit', requireAuth, (req, res) => {
+app.post('/admin/shops/:id/edit', requireOwner, (req, res) => {
   const id = Number(req.params.id);
   const { cityId, address, metro, hoursFrom, hoursTo } = req.body;
 
@@ -639,15 +1184,66 @@ app.post('/admin/shops/:id/edit', requireAuth, (req, res) => {
   res.redirect('/admin/shops');
 });
 
-app.post('/admin/shops/:id/delete', requireAuth, (req, res) => {
+app.post('/admin/shops/:id/delete', requireOwner, (req, res) => {
   const id = Number(req.params.id);
   writeData('shops.json', (readData('shops.json') || []).filter(s => s.id !== id));
+  writeData('managers.json', (readData('managers.json') || []).filter(m => Number(m.shopId) !== id));
+  writeData('stocks.json', (readData('stocks.json') || []).filter(s => Number(s.shopId) !== id));
   res.redirect('/admin/shops');
+});
+
+app.post('/admin/shops/:id/reset-password', requireOwner, async (req, res) => {
+  const id = Number(req.params.id);
+
+  const shops = readData('shops.json') || [];
+  const shop = shops.find(s => Number(s.id) === id);
+  if (!shop) return res.redirect('/admin/shops');
+
+  const managers = readData('managers.json') || [];
+  let manager = managers.find(m => Number(m.shopId) === id);
+
+  const plainPassword = generatePassword(12);
+  const passwordHash = await bcrypt.hash(plainPassword, 12);
+
+  if (manager) {
+    manager.passwordHash = passwordHash;
+  } else {
+    manager = {
+      id: nextId(managers),
+      login: 'shop-' + id + '@kb.ru',
+      passwordHash: passwordHash,
+      shopId: id,
+      createdAt: new Date().toISOString()
+    };
+    managers.push(manager);
+  }
+
+  writeData('managers.json', managers);
+
+  res.redirect('/admin/shops?newLogin=' + encodeURIComponent(manager.login) + '&newPassword=' + encodeURIComponent(plainPassword) + '&shopId=' + id);
+});
+
+/* ---------- ЗАГРУЗКА ИЗОБРАЖЕНИЙ ---------- */
+
+app.post('/admin/upload/image', requireOwner, uploadProduct.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Файл не загружен' });
+  }
+  const url = '/uploads/products/' + req.file.filename;
+  res.json({ ok: true, url: url });
+});
+
+app.post('/admin/upload/partner', requireOwner, uploadPartner.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Файл не загружен' });
+  }
+  const url = '/uploads/partners/' + req.file.filename;
+  res.json({ ok: true, url: url });
 });
 
 /* ---------- ТОВАРЫ ---------- */
 
-app.get('/admin/products', requireAuth, (req, res) => {
+app.get('/admin/products', requireOwner, (req, res) => {
   const products = readData('products.json') || [];
   const categories = sortByName(readData('categories.json') || []);
 
@@ -656,7 +1252,7 @@ app.get('/admin/products', requireAuth, (req, res) => {
     return {
       ...p,
       categoryName: cat ? cat.name : '—',
-      badgeLabel: badgeLabel(p.badge)
+      badgeLabel: badgeLabel(p.badge, p.discountPercent)
     };
   });
 
@@ -667,20 +1263,20 @@ app.get('/admin/products', requireAuth, (req, res) => {
     products: productsWithCat,
     badgeOptions: [
       { value: '', label: 'Без бейджа' },
-      { value: 'hit', label: 'Хит → ХИТ' },
-      { value: 'discount', label: '-20% → -20%' },
-      { value: 'new', label: 'Новинка → НОВИНКА' },
-      { value: 'sale', label: 'SALE → SALE' },
-      { value: '1+1', label: '1+1 → 1+1' }
+      { value: 'hit', label: 'Хит' },
+      { value: 'discount', label: 'Скидка %' },
+      { value: 'new', label: 'Новинка' },
+      { value: 'sale', label: 'SALE' },
+      { value: '1+1', label: '1+1' }
     ],
     error: req.query.error || null
   });
 });
 
-app.post('/admin/products', requireAuth, (req, res) => {
+app.post('/admin/products', requireOwner, (req, res) => {
   const {
-    name, categoryId, brand, price, oldPrice,
-    type, value, weight, badge
+    name, categoryId, brand, price, type, weight,
+    badge, discountPercent, image
   } = req.body;
 
   if (!name || !name.trim()) return res.redirect('/admin/products');
@@ -698,32 +1294,44 @@ app.post('/admin/products', requireAuth, (req, res) => {
     return res.redirect('/admin/products?error=' + encodeURIComponent('Такой товар уже есть в этой категории'));
   }
 
-  const numValue = normalizeValue(type, value);
+  const basePrice = Number(price);
+  const badgeCode = badge || '';
+  let finalPrice = basePrice;
+  let oldPrice = null;
+  let discount = 0;
+
+  if (badgeCode === 'discount') {
+    discount = Math.min(99, Math.max(0, Number(discountPercent) || 0));
+    if (discount > 0) {
+      oldPrice = basePrice;
+      finalPrice = Math.round(basePrice * (1 - discount / 100) * 100) / 100;
+    }
+  }
 
   products.push({
     id: nextId(products),
     name: name.trim(),
     categoryId: Number(categoryId),
     brand: (brand && brand.trim()) || '',
-    price: Number(price),
-    oldPrice: oldPrice ? Number(oldPrice) : null,
+    price: finalPrice,
+    oldPrice: oldPrice,
+    discountPercent: discount,
     type: type,
     unit: type === 'weight' ? 'кг' : 'шт',
     weight: (weight && weight.trim()) || '',
-    value: numValue,
-    quantity: numValue,
-    badge: badge || ''
+    badge: badgeCode,
+    image: (image && image.trim()) || ''
   });
 
   writeData('products.json', products);
   res.redirect('/admin/products');
 });
 
-app.post('/admin/products/:id/edit', requireAuth, (req, res) => {
+app.post('/admin/products/:id/edit', requireOwner, (req, res) => {
   const id = Number(req.params.id);
   const {
-    name, categoryId, brand, price, oldPrice,
-    type, value, weight, badge
+    name, categoryId, brand, price, type, weight,
+    badge, discountPercent, image
   } = req.body;
 
   if (!name || !name.trim()) return res.redirect('/admin/products');
@@ -743,7 +1351,19 @@ app.post('/admin/products/:id/edit', requireAuth, (req, res) => {
     return res.redirect('/admin/products?error=' + encodeURIComponent('Такой товар уже есть в этой категории'));
   }
 
-  const numValue = normalizeValue(type, value);
+  const basePrice = Number(price);
+  const badgeCode = badge || '';
+  let finalPrice = basePrice;
+  let oldPrice = null;
+  let discount = 0;
+
+  if (badgeCode === 'discount') {
+    discount = Math.min(99, Math.max(0, Number(discountPercent) || 0));
+    if (discount > 0) {
+      oldPrice = basePrice;
+      finalPrice = Math.round(basePrice * (1 - discount / 100) * 100) / 100;
+    }
+  }
 
   const updated = products.map(p =>
     p.id === id
@@ -752,14 +1372,14 @@ app.post('/admin/products/:id/edit', requireAuth, (req, res) => {
           name: name.trim(),
           categoryId: Number(categoryId),
           brand: (brand && brand.trim()) || '',
-          price: Number(price),
-          oldPrice: oldPrice ? Number(oldPrice) : null,
+          price: finalPrice,
+          oldPrice: oldPrice,
+          discountPercent: discount,
           type: type,
           unit: type === 'weight' ? 'кг' : 'шт',
           weight: (weight && weight.trim()) || '',
-          value: numValue,
-          quantity: numValue,
-          badge: badge || ''
+          badge: badgeCode,
+          image: (image && image.trim()) || p.image || ''
         }
       : p
   );
@@ -768,15 +1388,16 @@ app.post('/admin/products/:id/edit', requireAuth, (req, res) => {
   res.redirect('/admin/products');
 });
 
-app.post('/admin/products/:id/delete', requireAuth, (req, res) => {
+app.post('/admin/products/:id/delete', requireOwner, (req, res) => {
   const id = Number(req.params.id);
   writeData('products.json', (readData('products.json') || []).filter(p => p.id !== id));
+  writeData('stocks.json', (readData('stocks.json') || []).filter(s => Number(s.productId) !== id));
   res.redirect('/admin/products');
 });
 
 /* ---------- НАСТРОЙКИ КАЛЬКУЛЯТОРА ---------- */
 
-app.get('/admin/calc-settings', requireAuth, (req, res) => {
+app.get('/admin/calc-settings', requireOwner, (req, res) => {
   const settings = readData('settings.json') || { calc: {} };
   res.render('admin-calc-settings', {
     calc: settings.calc || {},
@@ -784,7 +1405,7 @@ app.get('/admin/calc-settings', requireAuth, (req, res) => {
   });
 });
 
-app.post('/admin/calc-settings', requireAuth, (req, res) => {
+app.post('/admin/calc-settings', requireOwner, (req, res) => {
   const {
     serviceFee, minGuests, maxGuests, minHours, maxHours,
     wedding, corporate, birthday, party
@@ -812,17 +1433,131 @@ app.post('/admin/calc-settings', requireAuth, (req, res) => {
 
 /* ---------- ЗАКАЗЫ ---------- */
 
-app.get('/admin/orders', requireAuth, (req, res) => {
+app.get('/admin/orders', requireOwner, (req, res) => {
   const orders = readData('orders.json') || [];
-  orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  res.render('admin-orders', { orders });
+  const shops = readData('shops.json') || [];
+  const cities = readData('cities.json') || [];
+
+  const ordersView = orders.map(o => {
+    let shopName = '—';
+    if (o.shopId) {
+      const shop = shops.find(s => Number(s.id) === Number(o.shopId));
+      if (shop) {
+        const city = cities.find(c => Number(c.id) === Number(shop.cityId));
+        shopName = (city ? city.name + ', ' : '') + shop.address;
+      }
+    }
+    return { ...o, shopName: shopName };
+  });
+
+  ordersView.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.render('admin-orders', { orders: ordersView });
 });
 
-app.post('/admin/orders/:id/delete', requireAuth, (req, res) => {
+app.post('/admin/orders/:id/delete', requireOwner, (req, res) => {
   const id = Number(req.params.id);
   writeData('orders.json', (readData('orders.json') || []).filter(o => o.id !== id));
   res.redirect('/admin/orders');
 });
+
+/* ---------- ПРОВЕРКА ПРОМОКОДА ---------- */
+
+function checkPromoCode(code, items, subtotal, products, categories) {
+  if (!code || !code.trim()) {
+    return { ok: false, message: 'Введите промокод' };
+  }
+
+  const promoList = readData('promo.json') || [];
+  const promo = promoList.find(p => String(p.code).toUpperCase() === String(code).trim().toUpperCase());
+
+  if (!promo) {
+    return { ok: false, message: 'Промокод не найден' };
+  }
+
+  if (!promo.active) {
+    return { ok: false, message: 'Промокод недействителен' };
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (promo.validFrom) {
+    const fromDate = parseDateDDMMYYYY(promo.validFrom);
+    if (fromDate && today < fromDate) {
+      return { ok: false, message: 'Промокод ещё не действует' };
+    }
+  }
+
+  if (promo.validUntil) {
+    const untilDate = parseDateDDMMYYYY(promo.validUntil);
+    if (untilDate) {
+      untilDate.setHours(23, 59, 59, 999);
+      if (today > untilDate) {
+        return { ok: false, message: 'Срок действия промокода истёк' };
+      }
+    }
+  }
+
+  if (Number(promo.usageLimit) > 0 && Number(promo.usedCount) >= Number(promo.usageLimit)) {
+    return { ok: false, message: 'Промокод недействителен' };
+  }
+
+  const minSubtotal = Number(promo.minSubtotal) || 0;
+  if (minSubtotal > 0 && subtotal < minSubtotal) {
+    return { ok: false, message: 'Минимальная сумма ' + minSubtotal + ' ₽' };
+  }
+
+  const catIds = Array.isArray(promo.categoryIds) ? promo.categoryIds.map(Number) : [];
+  const prodIds = Array.isArray(promo.productIds) ? promo.productIds.map(Number) : [];
+  const brandNames = Array.isArray(promo.brandNames) ? promo.brandNames.map(s => String(s).toLowerCase()) : [];
+
+  const applicableItems = [];
+
+  items.forEach(item => {
+    const product = products.find(p => Number(p.id) === Number(item.id));
+    if (!product) return;
+
+    if (catIds.length > 0 && !catIds.includes(Number(product.categoryId))) return;
+    if (prodIds.length > 0 && !prodIds.includes(Number(product.id))) return;
+    if (brandNames.length > 0 && !brandNames.includes(String(product.brand || '').toLowerCase())) return;
+
+    applicableItems.push({
+      id: product.id,
+      name: product.name,
+      qty: Number(item.qty) || 0,
+      price: Number(item.price) || 0,
+      sum: (Number(item.qty) || 0) * (Number(item.price) || 0)
+    });
+  });
+
+  if (!applicableItems.length) {
+    return { ok: false, message: 'Промокод не подходит ни к одному товару' };
+  }
+
+  const applicableSum = applicableItems.reduce((s, i) => s + i.sum, 0);
+
+  let discount = 0;
+  const value = Number(promo.value) || 0;
+
+  if (promo.type === 'fixed') {
+    discount = Math.min(value, applicableSum);
+  } else {
+    discount = Math.round(applicableSum * value) / 100;
+  }
+
+  discount = Math.round(discount * 100) / 100;
+
+  return {
+    ok: true,
+    promoId: promo.id,
+    code: promo.code,
+    type: promo.type,
+    value: value,
+    discount: discount,
+    applicableItems: applicableItems,
+    message: 'Промокод применён'
+  };
+}
 
 /* ---------- API АДМИНКИ ---------- */
 
@@ -832,6 +1567,7 @@ app.get('/api/admin/shops', requireAuthApi, (req, res) => res.json(readData('sho
 app.get('/api/admin/products', requireAuthApi, (req, res) => res.json(readData('products.json') || []));
 app.get('/api/admin/regions', requireAuthApi, (req, res) => res.json(readData('regions.json') || []));
 app.get('/api/admin/partners', requireAuthApi, (req, res) => res.json(readData('partners.json') || []));
+app.get('/api/admin/promo', requireAuthApi, (req, res) => res.json(readData('promo.json') || []));
 app.get('/api/admin/settings', requireAuthApi, (req, res) => res.json(readData('settings.json') || {}));
 app.get('/api/admin/orders', requireAuthApi, (req, res) => res.json(readData('orders.json') || []));
 
@@ -852,7 +1588,7 @@ app.listen(PORT, () => {
   console.log('');
   if (!process.env.OWNER_LOGIN || !process.env.OWNER_PASSWORD_HASH) {
     console.log('  ВНИМАНИЕ: OWNER_LOGIN или OWNER_PASSWORD_HASH не заданы в .env');
-    console.log('  Вход в админку невозможен.');
+    console.log('  Вход владельца невозможен.');
     console.log('');
   }
   if (!process.env.SESSION_SECRET) {

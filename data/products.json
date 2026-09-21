@@ -4,10 +4,27 @@
     "name": "Кристина",
     "categoryId": 1789997847203,
     "brand": "Astrena",
-    "price": 999999999999,
-    "oldPrice": 100000000001,
-    "quantity": 1,
+    "price": 1000000000001,
+    "oldPrice": null,
+    "discountPercent": 0,
+    "type": "piece",
+    "unit": "шт",
     "weight": "67.2 кг",
-    "badge": "Хит"
+    "badge": "hit",
+    "image": "/uploads/products/product-1790023486143-901697205.jpg"
+  },
+  {
+    "id": 2,
+    "name": "Salli_Acorn",
+    "categoryId": 1,
+    "brand": "Astrena",
+    "price": 55.77,
+    "oldPrice": 169,
+    "discountPercent": 67,
+    "type": "piece",
+    "unit": "шт",
+    "weight": "200 л",
+    "badge": "discount",
+    "image": "/uploads/products/product-1790023508420-779820765.jpg"
   }
 ]

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админка — Промокоды</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-page">
+  <header class="admin-header">
+    <div class="admin-header__logo">КБ Админка</div>
+    <nav class="admin-nav">
+      <a href="/admin">Обзор</a>
+      <a href="/admin/regions">Регионы</a>
+      <a href="/admin/cities">Города</a>
+      <a href="/admin/categories">Категории</a>
+      <a href="/admin/shops">Магазины</a>
+      <a href="/admin/products">Товары</a>
+      <a href="/admin/delivery">Партнеры</a>
+      <a href="/admin/promo" class="is-active">Промокоды</a>
+      <a href="/admin/calc-settings">Калькулятор</a>
+      <a href="/admin/orders">Заказы</a>
+      <a href="/admin/logout" class="admin-nav__logout">Выйти</a>
+    </nav>
+  </header>
+
+  <main class="admin-main">
+    <h1>Промокоды</h1>
+
+    <% if (error) { %>
+      <div class="admin-alert"><%= error %></div>
+    <% } %>
+
+    <details class="promo-create">
+      <summary class="promo-create__toggle">+ Создать промокод</summary>
+
+      <form class="admin-form--products promo-form" method="POST" action="/admin/promo" id="newPromoForm">
+        <div class="promo-form__row">
+          <input type="text" name="code" placeholder="Код промокода (СЛАДКОЕ20)" required>
+          <select name="type" class="promo-type-select">
+            <option value="percent">Процент, %</option>
+            <option value="fixed">Фикс. сумма, ₽</option>
+          </select>
+          <input type="number" name="value" placeholder="Значение" step="0.01" min="0" required>
+          <input type="number" name="minSubtotal" placeholder="Мин. сумма, ₽" step="0.01" min="0" value="0">
+          <input type="date" name="validFromInput" placeholder="Действует с">
+          <input type="date" name="validUntilInput" placeholder="Действует до">
+          <input type="number" name="usageLimit" placeholder="Лимит (0 = ∞)" min="0" value="0">
+          <label class="admin-radio promo-active-check">
+            <input type="checkbox" name="active" checked>
+            <span>Активен</span>
+          </label>
+        </div>
+
+        <div class="promo-cascade">
+          <div class="promo-cascade__col">
+            <div class="promo-cascade__title">1. Категории</div>
+            <div class="promo-cascade__list" id="promoCategoriesNew">
+              <% categories.forEach(cat => { %>
+                <label class="promo-check">
+                  <input type="checkbox" name="categoryIds" value="<%= cat.id %>" class="promo-cat-checkbox">
+                  <span><%= cat.name %></span>
+                </label>
+              <% }) %>
+            </div>
+          </div>
+
+          <div class="promo-cascade__col">
+            <div class="promo-cascade__title">2. Бренды</div>
+            <div class="promo-cascade__list" id="promoBrandsNew">
+              <div class="promo-cascade__empty">Сначала выберите категории</div>
+            </div>
+          </div>
+
+          <div class="promo-cascade__col">
+            <div class="promo-cascade__title">3. Товары</div>
+            <div class="promo-cascade__list" id="promoProductsNew">
+              <div class="promo-cascade__empty">Сначала выберите бренды</div>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="promo-submit">Создать промокод</button>
+      </form>
+    </details>
+
+    <div class="admin-search">
+      <input type="text" id="tableSearch" placeholder="Поиск по коду...">
+      <span class="admin-search__count" id="searchCount"></span>
+    </div>
+
+    <table class="admin-table" id="dataTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Код</th>
+          <th>Скидка</th>
+          <th>Мин. сумма</th>
+          <th>Срок</th>
+          <th>Лимит</th>
+          <th>Использован</th>
+          <th>Условие</th>
+          <th>Активен</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% promos.forEach(p => { %>
+          <% 
+            const catNames = Array.isArray(p.categoryIds) 
+              ? p.categoryIds.map(id => (categories.find(c => Number(c.id) === Number(id)) || {}).name).filter(Boolean)
+              : [];
+            const brandList = Array.isArray(p.brandNames) ? p.brandNames : [];
+            const prodList = Array.isArray(p.productIds) 
+              ? p.productIds.map(id => (products.find(pr => Number(pr.id) === Number(id)) || {}).name).filter(Boolean)
+              : [];
+          %>
+          <tr data-id="<%= p.id %>">
+            <td><%= p.id %></td>
+            <td class="row-view">
+              <span class="promo-code"><%= p.code %></span>
+            </td>
+            <td class="row-view">
+              <% if (p.type === 'percent') { %>
+                <%= p.value %>%
+              <% } else { %>
+                <%= Number(p.value).toFixed(2) %> ₽
+              <% } %>
+            </td>
+            <td class="row-view">
+              <%= Number(p.minSubtotal || 0) > 0 ? Number(p.minSubtotal).toFixed(2) + ' ₽' : '—' %>
+            </td>
+            <td class="row-view">
+              <% if (p.validFrom || p.validUntil) { %>
+                <%= p.validFrom || '—' %> … <%= p.validUntil || '—' %>
+              <% } else { %>
+                —
+              <% } %>
+            </td>
+            <td class="row-view">
+              <%= Number(p.usageLimit) > 0 ? p.usageLimit : '∞' %>
+            </td>
+            <td class="row-view"><%= p.usedCount || 0 %></td>
+            <td class="row-view promo-condition">
+              <% if (catNames.length) { %>
+                <div><b>Кат:</b> <%= catNames.join(', ') %></div>
+              <% } %>
+              <% if (brandList.length) { %>
+                <div><b>Бренд:</b> <%= brandList.join(', ') %></div>
+              <% } %>
+              <% if (prodList.length) { %>
+                <div><b>Товар:</b> <%= prodList.join(', ') %></div>
+              <% } %>
+              <% if (!catNames.length && !brandList.length && !prodList.length) { %>
+                —
+              <% } %>
+            </td>
+            <td class="row-view">
+              <form method="POST" action="/admin/promo/<%= p.id %>/toggle" style="display:inline">
+                <button type="submit" class="promo-toggle <%= p.active ? 'is-on' : 'is-off' %>">
+                  <%= p.active ? 'Вкл' : 'Выкл' %>
+                </button>
+              </form>
+            </td>
+            <td class="row-view admin-actions">
+              <button type="button" class="admin-btn-edit" onclick="editRow(<%= p.id %>)">Изменить</button>
+              <form method="POST" action="/admin/promo/<%= p.id %>/delete" onsubmit="return confirm('Удалить промокод <%= p.code %>?')">
+                <button type="submit" class="admin-btn-delete">Удалить</button>
+              </form>
+            </td>
+
+            <td class="row-edit" colspan="10">
+              <form method="POST" action="/admin/promo/<%= p.id %>/edit" class="promo-form promo-form--edit" data-promo-id="<%= p.id %>">
+                <div class="promo-form__row">
+                  <input type="text" name="code" value="<%= p.code %>" required>
+                  <select name="type" class="promo-type-select">
+                    <option value="percent" <%= p.type === 'percent' ? 'selected' : '' %>>Процент, %</option>
+                    <option value="fixed" <%= p.type === 'fixed' ? 'selected' : '' %>>Фикс. сумма, ₽</option>
+                  </select>
+                  <input type="number" name="value" value="<%= p.value %>" step="0.01" min="0" required>
+                  <input type="number" name="minSubtotal" value="<%= p.minSubtotal || 0 %>" step="0.01" min="0" placeholder="Мин. сумма">
+                  <input type="date" name="validFromInput" value="<%= p.validFromInput %>">
+                  <input type="date" name="validUntilInput" value="<%= p.validUntilInput %>">
+                  <input type="number" name="usageLimit" value="<%= p.usageLimit || 0 %>" min="0" placeholder="Лимит">
+                  <label class="admin-radio promo-active-check">
+                    <input type="checkbox" name="active" <%= p.active ? 'checked' : '' %>>
+                    <span>Активен</span>
+                  </label>
+                </div>
+
+                <div class="promo-cascade">
+                  <div class="promo-cascade__col">
+                    <div class="promo-cascade__title">1. Категории</div>
+                    <div class="promo-cascade__list" data-promo-cats="<%= p.id %>">
+                      <% categories.forEach(cat => { %>
+                        <% const checked = Array.isArray(p.categoryIds) && p.categoryIds.map(Number).includes(Number(cat.id)); %>
+                        <label class="promo-check">
+                          <input type="checkbox" name="categoryIds" value="<%= cat.id %>" class="promo-cat-checkbox" <%= checked ? 'checked' : '' %>>
+                          <span><%= cat.name %></span>
+                        </label>
+                      <% }) %>
+                    </div>
+                  </div>
+
+                  <div class="promo-cascade__col">
+                    <div class="promo-cascade__title">2. Бренды</div>
+                    <div class="promo-cascade__list" data-promo-brands="<%= p.id %>">
+                      <div class="promo-cascade__empty">Загрузка…</div>
+                    </div>
+                  </div>
+
+                  <div class="promo-cascade__col">
+                    <div class="promo-cascade__title">3. Товары</div>
+                    <div class="promo-cascade__list" data-promo-products="<%= p.id %>">
+                      <div class="promo-cascade__empty">Загрузка…</div>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="submit" class="admin-btn-save">Сохранить</button>
+                <button type="button" class="admin-btn-cancel" onclick="cancelEdit(<%= p.id %>)">Отмена</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </main>
+
+  <script>
+    window.PROMO_DATA = {
+      categories: <%- JSON.stringify(categories) %>,
+      products: <%- JSON.stringify(products) %>,
+      promos: <%- JSON.stringify(promos) %>
+    };
+  </script>
+  <script src="/js/admin.js"></script>
+  <script src="/js/admin-promo.js"></script>
+</body>
+</html>

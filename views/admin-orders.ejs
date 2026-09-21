@@ -10,14 +10,17 @@
   <header class="admin-header">
     <div class="admin-header__logo">КБ Админка</div>
     <nav class="admin-nav">
-      <a href="/admin">Обзор</a>
-      <a href="/admin/cities">Города</a>
-      <a href="/admin/categories">Категории</a>
-      <a href="/admin/shops">Магазины</a>
-      <a href="/admin/products">Товары</a>
-      <a href="/admin/calc-settings">Калькулятор</a>
-      <a href="/admin/orders" class="is-active">Заказы</a>
-      <a href="/admin/logout" class="admin-nav__logout">Выйти</a>
+        <a href="/admin">Обзор</a>
+        <a href="/admin/regions">Регионы</a>
+        <a href="/admin/cities">Города</a>
+        <a href="/admin/categories">Категории</a>
+        <a href="/admin/shops">Магазины</a>
+        <a href="/admin/products">Товары</a>
+        <a href="/admin/delivery">Партнеры</a>
+        <a href="/admin/promo">Промокоды</a>
+        <a href="/admin/calc-settings">Калькулятор</a>
+        <a href="/admin/orders" class="is-active">Заказы</a>
+        <a href="/admin/logout" class="admin-nav__logout">Выйти</a>
     </nav>
   </header>
 
@@ -27,7 +30,12 @@
     <% if (!orders.length) { %>
       <p style="color:#6B6B6B;">Заказов пока нет.</p>
     <% } else { %>
-      <table class="admin-table">
+      <div class="admin-search">
+        <input type="text" id="tableSearch" placeholder="Поиск по ID, партнёру, сумме...">
+        <span class="admin-search__count" id="searchCount"></span>
+      </div>
+
+      <table class="admin-table" id="dataTable">
         <thead>
           <tr>
             <th>ID</th>
@@ -35,20 +43,22 @@
             <th>Гостей</th>
             <th>Часов</th>
             <th>Мероприятие</th>
-            <th>Без алкоголя</th>
+            <th>Доставка</th>
+            <th>Промокод</th>
             <th>Сумма</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           <% orders.forEach(o => { %>
-            <tr>
+            <tr data-id="<%= o.id %>">
               <td><%= o.id %></td>
               <td><%= new Date(o.createdAt).toLocaleString('ru-RU') %></td>
-              <td><%= o.guests %></td>
-              <td><%= o.hours %></td>
+              <td><%= o.guests || '—' %></td>
+              <td><%= o.hours || '—' %></td>
               <td><%= o.eventType || '—' %></td>
-              <td><%= o.noAlcohol ? 'Да' : 'Нет' %></td>
+              <td><%= o.deliveryFee ? Number(o.deliveryFee).toFixed(2) + ' ₽' : '—' %></td>
+              <td><%= o.promoCode || '—' %></td>
               <td><%= Number(o.total).toFixed(2) %> ₽</td>
               <td>
                 <form method="POST" action="/admin/orders/<%= o.id %>/delete" onsubmit="return confirm('Удалить заказ?')">
@@ -61,5 +71,7 @@
       </table>
     <% } %>
   </main>
+
+  <script src="/js/admin.js"></script>
 </body>
 </html>

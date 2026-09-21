@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админка — Доставка</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-page">
+  <header class="admin-header">
+    <div class="admin-header__logo">КБ Админка</div>
+    <nav class="admin-nav">
+        <a href="/admin">Обзор</a>
+        <a href="/admin/regions">Регионы</a>
+        <a href="/admin/cities">Города</a>
+        <a href="/admin/categories">Категории</a>
+        <a href="/admin/shops">Магазины</a>
+        <a href="/admin/products">Товары</a>
+        <a href="/admin/delivery" class="is-active">Партнеры</a>
+        <a href="/admin/promo">Промокоды</a>
+        <a href="/admin/calc-settings">Калькулятор</a>
+        <a href="/admin/orders">Заказы</a>
+        <a href="/admin/logout" class="admin-nav__logout">Выйти</a>
+    </nav>
+  </header>
+
+  <main class="admin-main">
+    <h1>Доставка</h1>
+
+    <p class="admin-hint">
+      Партнёры показываются на странице «Доставка» (логотип, название, описание, ссылка) и на странице оформления заказа после корзины (логотип, название, ссылка, стоимость доставки, сервисный сбор).
+    </p>
+
+    <% if (error) { %>
+      <div class="admin-alert"><%= error %></div>
+    <% } %>
+
+    <form class="admin-form--products" method="POST" action="/admin/delivery">
+      <input type="text" name="name" placeholder="Название (Яндекс.Лавка)" required>
+      <input type="text" name="description" placeholder="Краткое описание">
+      <input type="url" name="url" placeholder="Ссылка https://...">
+      <input type="number" name="deliveryFee" placeholder="Доставка, ₽" step="0.01" min="0" value="0">
+      <input type="number" name="serviceFee" placeholder="Сервисный сбор, ₽" step="0.01" min="0" value="0">
+
+      <div class="admin-image-upload">
+        <input type="hidden" name="logo" id="newPartnerLogo" value="">
+        <input type="file" accept="image/*" class="image-file-input" id="newPartnerLogoFile">
+        <label for="newPartnerLogoFile" class="image-file-label">Логотип</label>
+        <div class="image-preview" id="newPartnerLogoPreview" style="display:none">
+          <img src="" alt="">
+          <button type="button" class="image-clear" onclick="clearNewPartnerLogo()">✕</button>
+        </div>
+      </div>
+
+      <button type="submit">Добавить</button>
+    </form>
+
+    <div class="admin-search">
+      <input type="text" id="tableSearch" placeholder="Поиск по названию...">
+      <span class="admin-search__count" id="searchCount"></span>
+    </div>
+
+    <table class="admin-table" id="dataTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Логотип</th>
+          <th>Название</th>
+          <th>Описание</th>
+          <th>Ссылка</th>
+          <th>Доставка</th>
+          <th>Сервисный сбор</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% partners.forEach(p => { %>
+          <tr data-id="<%= p.id %>">
+            <td><%= p.id %></td>
+            <td class="row-view">
+              <% if (p.logo) { %>
+                <img src="<%= p.logo %>" alt="" class="admin-thumb">
+              <% } else { %>
+                <span class="admin-thumb admin-thumb--empty">🚚</span>
+              <% } %>
+            </td>
+            <td class="row-view"><span class="cell-name"><%= p.name %></span></td>
+            <td class="row-view"><span class="cell-desc"><%= p.description || '—' %></span></td>
+            <td class="row-view">
+              <% if (p.url) { %>
+                <a href="<%= p.url %>" target="_blank" rel="noopener" style="color:#A52A2A;"><%= p.url %></a>
+              <% } else { %>
+                —
+              <% } %>
+            </td>
+            <td class="row-view"><span class="cell-delivery"><%= Number(p.deliveryFee || 0).toFixed(2) %> ₽</span></td>
+            <td class="row-view"><span class="cell-service"><%= Number(p.serviceFee || 0).toFixed(2) %> ₽</span></td>
+            <td class="row-view admin-actions">
+              <button type="button" class="admin-btn-edit" onclick="editRow(<%= p.id %>)">Изменить</button>
+              <form method="POST" action="/admin/delivery/<%= p.id %>/delete" onsubmit="return confirm('Удалить партнёра <%= p.name %>?')">
+                <button type="submit" class="admin-btn-delete">Удалить</button>
+              </form>
+            </td>
+
+            <td class="row-edit" colspan="8">
+              <form method="POST" action="/admin/delivery/<%= p.id %>/edit" class="admin-edit-form--products">
+                <input type="text" name="name" value="<%= p.name %>" required>
+                <input type="text" name="description" value="<%= p.description || '' %>" placeholder="Описание">
+                <input type="url" name="url" value="<%= p.url || '' %>" placeholder="Ссылка">
+                <input type="number" name="deliveryFee" value="<%= p.deliveryFee || 0 %>" step="0.01" min="0" placeholder="Доставка">
+                <input type="number" name="serviceFee" value="<%= p.serviceFee || 0 %>" step="0.01" min="0" placeholder="Сервисный сбор">
+
+                <div class="admin-image-upload admin-image-upload--edit">
+                  <input type="hidden" name="logo" class="edit-image-input" value="<%= p.logo || '' %>">
+                  <input type="file" accept="image/*" class="image-file-input edit-image-file" id="editPartnerLogo<%= p.id %>">
+                  <label for="editPartnerLogo<%= p.id %>" class="image-file-label">Логотип</label>
+                  <div class="image-preview" data-preview style="<%= p.logo ? '' : 'display:none' %>">
+                    <img src="<%= p.logo || '' %>" alt="">
+                    <button type="button" class="image-clear edit-image-clear">✕</button>
+                  </div>
+                </div>
+
+                <button type="submit" class="admin-btn-save">Сохранить</button>
+                <button type="button" class="admin-btn-cancel" onclick="cancelEdit(<%= p.id %>)">Отмена</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </main>
+
+  <script src="/js/admin.js"></script>
+  <script src="/js/admin-delivery.js"></script>
+</body>
+</html>

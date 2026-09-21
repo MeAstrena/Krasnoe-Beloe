@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мой магазин — Красное&Белое</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-page">
+  <header class="admin-header">
+    <div class="admin-header__logo">КБ Магазин</div>
+    <nav class="admin-nav">
+      <a href="/admin/my-shop" class="is-active">Товары магазина</a>
+      <a href="/admin/logout" class="admin-nav__logout">Выйти</a>
+    </nav>
+  </header>
+
+  <main class="admin-main">
+    <h1>Остатки товаров</h1>
+
+    <div class="shop-info">
+      <div class="shop-info__row">
+        <span class="shop-info__label">Магазин:</span>
+        <span class="shop-info__value"><%= shopName %></span>
+      </div>
+      <div class="shop-info__row">
+        <span class="shop-info__label">Логин:</span>
+        <span class="shop-info__value"><%= login %></span>
+      </div>
+    </div>
+
+    <div class="admin-search">
+      <input type="text" id="tableSearch" placeholder="Поиск по названию, категории, бренду...">
+      <span class="admin-search__count" id="searchCount"></span>
+    </div>
+
+    <div class="my-shop-loading" id="myShopLoading">Загрузка товаров…</div>
+
+    <table class="admin-table" id="myShopTable" style="display:none">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Фото</th>
+          <th>Название</th>
+          <th>Категория</th>
+          <th>Бренд</th>
+          <th>Тип</th>
+          <th>Цена</th>
+          <th>Остаток</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="myShopBody"></tbody>
+    </table>
+
+    <div class="my-shop-empty" id="myShopEmpty" style="display:none">
+      Товаров пока нет
+    </div>
+  </main>
+
+  <script>
+    window.MY_SHOP = {
+      shopId: <%= shop.id %>
+    };
+  </script>
+  <script src="/js/admin-my-shop.js"></script>
+</body>
+</html>

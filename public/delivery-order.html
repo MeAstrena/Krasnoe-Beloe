@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Оформление доставки — Красное&Белое</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="theme-dark">
+
+  <header class="header header--dark">
+    <div class="container">
+      <div class="header__top">
+        <a href="/" class="header__logo" aria-label="Красное&Белое">
+          <img src="/img/logo.jpg" alt="Красное&Белое">
+        </a>
+        <div class="header__actions" style="margin-left:auto">
+          <a href="/cart.html" class="header__btn">
+            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <span>Назад в корзину</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <h1 class="section__title section__title--dark" style="padding: 32px 0 8px;">Выберите службу доставки</h1>
+    <p class="delivery-page__intro">
+      «Красное&Белое» не доставляет самостоятельно. Выберите партнёра — стоимость доставки и сервисный сбор указаны в карточке.
+    </p>
+  </div>
+
+  <div class="container">
+    <div class="order-layout">
+
+      <div class="order-partners">
+        <div class="order-partners__empty" id="orderPartnersEmpty">Загрузка…</div>
+        <div class="order-slider" id="orderSlider"></div>
+        <div class="order-slider__nav">
+          <button type="button" class="order-slider__btn" id="orderPrev" aria-label="Назад">←</button>
+          <button type="button" class="order-slider__btn" id="orderNext" aria-label="Вперёд">→</button>
+        </div>
+      </div>
+
+      <aside class="order-summary">
+        <div class="order-summary__title">Ваш заказ</div>
+
+        <div class="order-summary__row">
+          <span>Товары</span>
+          <span id="orderSubtotal">0,00 ₽</span>
+        </div>
+        <div class="order-summary__row">
+          <span>Доставка</span>
+          <span id="orderDelivery">—</span>
+        </div>
+        <div class="order-summary__row">
+          <span>Сервисный сбор</span>
+          <span id="orderService">—</span>
+        </div>
+        <div class="order-summary__row" id="orderDiscountRow" style="display:none">
+          <span>Скидка по промокоду</span>
+          <span id="orderDiscount">−0,00 ₽</span>
+        </div>
+
+        <div class="order-summary__promo">
+          <input type="text" id="orderPromoInput" placeholder="Промокод">
+          <button type="button" id="orderPromoBtn">Активировать</button>
+          <button type="button" id="orderPromoReset" class="order-summary__promo-reset" title="Убрать промокод" style="display:none">✕</button>
+        </div>
+        <div class="order-summary__promo-msg" id="orderPromoMsg"></div>
+
+        <div class="order-summary__total">
+          <span>Итого</span>
+          <strong id="orderTotal">0,00 ₽</strong>
+        </div>
+
+        <button type="button" class="order-summary__btn" id="orderConfirm" disabled>Подтвердить заказ</button>
+      </aside>
+
+    </div>
+  </div>
+
+  <footer class="footer footer--dark">
+    <div class="container">
+      <div class="footer__bottom">
+        <div>© 2026 Красное&Белое. Все права защищены.</div>
+        <div><span class="footer__age">18+</span>Продажа алкоголя запрещена несовершеннолетними</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/cart.js"></script>
+  <script src="/js/delivery-order.js"></script>
+</body>
+</html>
